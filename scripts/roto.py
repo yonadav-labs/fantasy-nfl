@@ -7,7 +7,7 @@ from os import sys, path
 import django
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "fantasy_mlb.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "fantasy_nfl.settings")
 django.setup()
 
 from general.models import *
@@ -42,10 +42,8 @@ def get_players(data_source):
 
         players = requests.get(url).json()
 
-        fields = ['point_spread', 'team_points', 'opponent', 'money_line',
-                  'proj_custom', 'proj_floor', 'proj_original', 'proj_points', 'proj_rotowire', 
-                  'proj_third_party_one', 'proj_third_party_two', 'actual_position', 
-                  'salary', 'team']
+        fields = ['point_spread', 'team_points', 'opponent', 'money_line','proj_points',
+                  'actual_position', 'salary', 'team']
 
         print (data_source, len(players))
         if len(players) > 20:

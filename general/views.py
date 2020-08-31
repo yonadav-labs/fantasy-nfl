@@ -322,7 +322,7 @@ def export_lineups(request):
     lineups, _ = _get_lineups(request)
     ds = request.POST.get('ds')
     csv_fields = CSV_FIELDS[ds]
-    path = "/tmp/.fantasy_mlb_{}.csv".format(ds.lower())
+    path = "/tmp/.fantasy_nfl_{}.csv".format(ds.lower())
 
     with open(path, 'w') as f:
         f.write(','.join(csv_fields)+'\n')
@@ -344,7 +344,7 @@ def export_lineups(request):
 def export_manual_lineup(request):
     ds = request.session.get('ds')
     lidx = request.GET.getlist('lidx')
-    path = "/tmp/.fantasy_mlb_{}.csv".format(ds.lower())
+    path = "/tmp/.fantasy_nfl_{}.csv".format(ds.lower())
     csv_fields = CSV_FIELDS[ds]
 
     with open(path, 'w') as f:
