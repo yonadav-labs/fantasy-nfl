@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load extra %}
+
+{% block css %}
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="/static/css/slider.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-iframe pt-3 mt-3 mb-3 lineups-container">
+  <form id="frm-player" action="/export_lineups" method="POST" onkeypress="return event.keyCode != 13;">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-12 mb-3">
+        <h5 class="mb-4">Lineup Optimizer</h5>
+        <a class="float-right mr-2" style="margin-top: -46px;" href="/lineup-builder">lineup builder</a>
+        <h6 class="text-success">- Game Slates</h6>
+        <div class="slate pl-3 pt-1 mb-2">
+        </div>
+      </div>
+      <input type="hidden" name="ds" id="ds">
+      <div class="col-md-7 mb-4 pr-md-2">
+        <ul class="nav nav-tabs ds">
+          {% for ds in data_sources %}  
+          <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#home">{{ ds.0 }}</a>
+          </li>
+          {% endfor %}
+          <li class="pt-2 ml-5">
+            Team stack <i class="fas fa-cog text-muted ml-1" onclick="setTeamStack();"></i>
+          </li>
+        </ul>
+        <div class="tab-content players-pane p-2">
+          <ul class="nav nav-pills position-filter p-2">
+            <li class="nav-item">
+              <a class="nav-link active" href="#">Hitters</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Pitchers</a>
+            </li>
+            <li class="nav-item cb-fd">
+              <a class="nav-link" href="#">C</a>
+            </li>
+            <li class="nav-item tg-fd">
+              <a class="nav-link" href="#">1B</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">2B</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">3B</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">SS</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">OF</a>
+            </li>
+          </ul>
+          <input class="form-control m-2 mb-3" id="search-player" type="search" placeholder="Search Player Name" autocomplete="off">
+          <div id="div-players"></div>
+        </div>
+      </div>
+
+      <div class="col-md-5 pl-md-2" id="div-result"></div>
+      <div class="px-3 col-md-10 mb-5 mt-1">
+        <button class="btn btn-sm btn-success btn-export mt-1">Export</button>
+        <a class="btn btn-sm btn-success btn-calc mt-1">Calculate</a>
+        <a class="btn btn-sm btn-success btn-clear mt-1">Clear</a>
+        <div class="c0cec43">
+          <input type="number" class="num-lineups float-right mt-1" name="num-lineups" value="5" min="1" onKeyPress="if(this.value.length==3) return false;">
+          <span class="float-right pt-1 mr-2 mt-1">Number of Lineups:</span>          
+        </div>
+      </div>
+    </div>
+  </form>
+  <div class="modal fade" id="dlg-export">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Exporting Lineups</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          The csv file will be downloaded shortly.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal fade" id="dlg-preview">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Preview Lineups</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success btn-export" data-dismiss="modal">Export</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="dlg-exposure">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Exposure Setting</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Min</label>
+            <input type="number" class="form-control" min="0" max="100" step="5" id="global-min-exp" value="0">
+          </div>
+          <div class="form-group">
+            <label>Max</label>
+            <input type="number" class="form-control" min="0" max="100" step="5" id="global-max-exp" value="100">
+            <div class="text-danger mt-2 d-none" id="exp_error">Please provide valid data.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success btn-set-exp" data-dismiss="modal">Ok</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="dlg-team-stack">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Team Stack Setting</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-success btn-set-exp" onclick="setTeamStack_()">Ok</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>  
+{% endblock %}
+
+{% block script %}
+  <script src="/static/js/lineup.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+{% endblock %}

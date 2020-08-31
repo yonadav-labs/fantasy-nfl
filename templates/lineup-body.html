@@ -1,0 +1,40 @@
+{% load extra %}
+<div class="pb-2 j89g893t34">
+  <div class="p-2">
+    <table class="table table-striped table-hover table-responsive-xs">
+      <thead>
+        <tr>
+          <th>Position</th>
+          <th>Name</th>
+          <th></th><th></th>
+          <th>Tm</th>
+          <th>Salary</th>
+          <th>Proj</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ii in players %}
+          <tr>
+            <td><i class="fas fa-times-circle pr-2" onclick="build_lineup(-{{ ii.player.id }});"></i>{{ ii.pos }}</td>
+            <td colspan="3">
+              <a href="#/players/{{ ii.player.id }}">
+                <div class="float-left">
+                  <img src="{{ ii.player.avatar }}" height="28" class="mr-2">
+                </div>
+                <div class="a98ef3r3e">{{ ii.player.first_name }} {{ ii.player.last_name }}</div>
+              </a>
+            </td>
+            <td>{{ ii.player.team }}</td>
+            <td class="text-right pr-3">{% if ds != 'Yahoo' and ii.player %}${% endif %}{{ ii.player.salary|floatformat:0 }}</td>
+            <td class="text-center">{{ ii.player|cus_proj_:request.session }}</td>
+          </tr>
+        {% endfor %}
+        <tr class="">
+          <td colspan="5">Rem / Player: {% if ds != 'Yahoo' %}${% endif %}{{ rem|floatformat:0 }}</td>
+          <td class="text-right pr-3">{% if ds != 'Yahoo' %}${% endif %}{{ sum_salary|floatformat:0 }}</td>
+          <td class="text-center">{{ sum_proj }}</td>
+        </tr>
+      </tbody>  
+    </table>
+  </div>
+</div>
