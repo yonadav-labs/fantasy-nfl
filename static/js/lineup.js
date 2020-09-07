@@ -219,18 +219,18 @@ $(function() {
   }
 
   filterTable = function () {
-    var position = $('.position-filter .nav-item a.active').html().replace('Pitchers', 'P'),
+    var position = $('.position-filter .nav-item a.active').html(),
         keyword = $('#search-player').val().toLowerCase().trim();    
 
-    if (position == 'Hitters') {
-      $("#div-players tr").filter(function() {
-        $(this).toggle($(this).find('td:nth-child(2)').text().indexOf('P') == -1 && $(this).find('td:nth-child(3)').text().toLowerCase().indexOf(keyword) > -1)
-      });
-    } else {
-      $("#div-players tr").filter(function() {
-        $(this).toggle($(this).find('td:nth-child(2)').text().indexOf(position) > -1 && $(this).find('td:nth-child(3)').text().toLowerCase().indexOf(keyword) > -1)
-      });      
+    if (position == 'All') {
+      position = '';
+    } else if (position == 'DEF') {
+      position = 'D';
     }
+
+    $("#div-players tr").filter(function() {
+      $(this).toggle($(this).find('td:nth-child(2)').text().indexOf(position) > -1 && $(this).find('td:nth-child(3)').text().toLowerCase().indexOf(keyword) > -1)
+    });
 
     $("#div-players thead tr").filter(function() {
       $(this).toggle(true);

@@ -137,7 +137,7 @@ def build_lineup(request):
         if SALARY_CAP[ds] >= sum_salary + player.salary:
             for ii in lineup:
                 if not ii['player']:
-                    if (player.position in 'RB/WR/TE' and pos == 'FLEX') or pos in player.position:
+                    if (player.position in 'RB/WR/TE' and ii['pos'] == 'FLEX') or ii['pos'] in player.position:
                         available = True
                         ii['player'] = pid
                         break
