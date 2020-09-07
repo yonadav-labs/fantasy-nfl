@@ -28,23 +28,29 @@ def players(request):
     players = Player.objects.filter(data_source='FanDuel').order_by('first_name')
     return render(request, 'players.html', locals())
 
+
 @xframe_options_exempt
 def lineup_builder(request):
     data_sources = DATA_SOURCE[:2]
     num_lineups = request.session.get('DraftKings_num_lineups', 1)
     return render(request, 'lineup-builder.html', locals())
 
+
 @xframe_options_exempt
 def lineup_optimizer(request):
     data_sources = DATA_SOURCE[:2]
+
     return render(request, 'lineup-optimizer.html', locals())
+
 
 def _is_full_lineup(lineup, ds):
     if not lineup:
         return False
 
     num_players = sum([1 for ii in lineup if ii['player']])
+
     return num_players == ROSTER_SIZE[ds]
+
 
 @csrf_exempt
 def get_team_stack_dlg(request, ds):
@@ -52,7 +58,9 @@ def get_team_stack_dlg(request, ds):
     for ii in Game.objects.filter(data_source=ds, display=True):
         teams.append(ii.home_team.lower())
         teams.append(ii.visit_team.lower())
+
     return render(request, 'team-stack-dlg.html', locals())
+
 
 @csrf_exempt
 def check_mlineups(request):
@@ -63,7 +71,9 @@ def check_mlineups(request):
         key = '{}_lineup_{}'.format(ds, ii)
         lineup = request.session.get(key)
         res.append([ii, 'checked' if _is_full_lineup(lineup, ds) else 'disabled'])
+
     return JsonResponse(res, safe=False)
+
 
 @csrf_exempt
 def build_lineup(request):
@@ -127,8 +137,7 @@ def build_lineup(request):
         if SALARY_CAP[ds] >= sum_salary + player.salary:
             for ii in lineup:
                 if not ii['player']:
-                    pos = ii['pos'].replace('C1B', 'C')
-                    if (player.actual_position != 'P' and pos == 'UTIL') or pos in player.actual_position:
+                    if (player.position in 'RB/WR/TE' and pos == 'FLEX') or pos in player.position:
                         available = True
                         ii['player'] = pid
                         break
@@ -189,9 +198,6 @@ def get_players(request):
         player = model_to_dict(ii, fields=['id', 'injury', 'avatar', 'salary', 'team',
                                            'actual_position', 'first_name', 'last_name',
                                            'handedness', 'start', 'start_status', 'opponent'])
-        if ds == 'FanDuel' and ii.actual_position == 'C':
-            player['actual_position'] = 'C/1B'
-
         if player['opponent'].startswith('@'):
             player['opponent'] = '@ '+player['opponent'][1:]
         else:
@@ -210,29 +216,6 @@ def get_players(request):
     return JsonResponse(result, safe=False)
 
 
-def current_season():
-    today = datetime.date.today()
-    return today.year if today > datetime.date(today.year, 10, 17) else today.year - 1
-
-
-def formated_diff(val):
-    fm = '{:.1f}' if val > 0 else '({:.1f})'
-    return fm.format(abs(val))
-
-
-def get_ranking(players, sattr, dattr, order=1):
-    # order = 1: ascending, -1: descending
-    players = sorted(players, key=lambda k: k[sattr]*order)
-    ranking = 0
-    prev_val = None
-    for ii in players:
-        if ii[sattr] != prev_val:
-            prev_val = ii[sattr]
-            ranking += 1
-        ii[dattr] = ranking
-    return players, ranking
-
-
 def get_player(full_name, team):
     '''
     FanDuel has top priority
@@ -248,6 +231,7 @@ def get_player(full_name, team):
 
 def mean(numbers):
     return float(sum(numbers)) / max(len(numbers), 1)
+
 
 def get_num_lineups(player, lineups):
     num = 0
@@ -274,7 +258,7 @@ def gen_lineups(request):
     ds = request.POST.get('ds')
     header = CSV_FIELDS[ds] + ['Spent', 'Projected']
     
-    rows = [[[str(jj) for jj in ii.get_players()]+[int(ii.spent()), ii.projected()], ii.drop]
+    rows = [[[str(jj) for jj in ii.get_players()]+[int(ii.spent()), '{:.2f}'.format(ii.projected())], ii.drop]
             for ii in lineups]
 
     result = {
@@ -316,6 +300,7 @@ def _get_export_cell(player, ds):
     else:
         return player.rid or str(player) + ' - No ID'
 
+
 @xframe_options_exempt
 @csrf_exempt
 def export_lineups(request):
@@ -338,6 +323,7 @@ def export_lineups(request):
     response['X-Frame-Options'] = 'GOFORIT'
 
     return response
+
 
 @xframe_options_exempt
 @csrf_exempt
@@ -407,6 +393,7 @@ def trigger_scraper(request):
 def go_dfs(request):
     return render(request, 'go-dfs.html')
 
+
 @csrf_exempt
 def get_slates(request):
     ds = request.POST.get('ds')
@@ -415,12 +402,12 @@ def get_slates(request):
 
 
 CSV_FIELDS = {
-    'FanDuel': ['P', 'C1B', '2B', '3B', 'SS', 'OF', 'OF', 'OF', 'UTIL'],
-    'DraftKings': ['P', 'P', 'C', '1B', '2B', '3B', 'SS', 'OF', 'OF', 'OF'],
+    'FanDuel': ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DEF'],
+    'DraftKings': ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DEF'],
 }
 
 SALARY_CAP = {
-    'FanDuel': 35000,
+    'FanDuel': 60000,
     'DraftKings': 50000,
 }
 
@@ -443,7 +430,6 @@ def _get_lineups(request):
     exposure = params.get('exposure')
     team_stack = params.get('team_stack', {})
     cus_proj = request.session.get('cus_proj', {})
-    no_batter_vs_pitcher = params.get('no_batter_vs_pitcher', True)
 
     ids = [ii for ii in ids if ii]
     flt = { 'proj_points__gt': 0, 'id__in': ids, 'salary__gt': 0 }
@@ -497,5 +483,6 @@ def _get_lineups(request):
             break
 
     lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, 
-        _team_stack, _exposure, cus_proj, no_batter_vs_pitcher)
+        _team_stack, _exposure, cus_proj)
+
     return lineups, players
