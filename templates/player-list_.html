@@ -23,7 +23,7 @@
   <tbody>
     {% for ii in players %}
       <tr class="{{ ii|cus_proj_cls:request.session }}">
-        <td><input type="checkbox" name="ids" {% if not ii.injury and ii.start %} checked="" {% endif %} value="{{ ii.id }}"></td>
+        <td><input type="checkbox" name="ids" {% if not ii.injury %} checked="" {% endif %} value="{{ ii.id }}"></td>
         <td style="cursor: pointer;" class="px-0" onclick="pr_click(this)">
           <img src="{{ ii.avatar }}" height="30" class="mr-0"> {{ ii.actual_position }}
         </td>

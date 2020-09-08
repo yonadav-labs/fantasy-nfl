@@ -196,7 +196,7 @@ def get_players(request):
     for ii in Player.objects.filter(data_source=ds, team__in=teams, play_today=True):
         player = model_to_dict(ii, fields=['id', 'injury', 'avatar', 'salary', 'team',
                                            'actual_position', 'first_name', 'last_name',
-                                           'handedness', 'start', 'start_status', 'opponent'])
+                                           'opponent'])
         if player['opponent'].startswith('@'):
             player['opponent'] = '@ '+player['opponent'][1:]
         else:
