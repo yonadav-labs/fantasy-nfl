@@ -31,14 +31,14 @@ def players(request):
 
 @xframe_options_exempt
 def lineup_builder(request):
-    data_sources = DATA_SOURCE[:2]
+    data_sources = DATA_SOURCE
     num_lineups = request.session.get('DraftKings_num_lineups', 1)
     return render(request, 'lineup-builder.html', locals())
 
 
 @xframe_options_exempt
 def lineup_optimizer(request):
-    data_sources = DATA_SOURCE[:2]
+    data_sources = DATA_SOURCE
 
     return render(request, 'lineup-optimizer.html', locals())
 

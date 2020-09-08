@@ -16,18 +16,10 @@ from scripts.get_slate import get_slate
 
 
 def get_delta(ii, ds):
-    if not float(ii['proj_points']):
-        factor = (0, 1)
-    elif 'P' in ii['position']:
-        factor = (3, 20)
-    else:
-        factor = (1, 9)
+    factor = (-10, 10)
     sign = 1 if random.randrange(0, 2) else -1
     delta = random.randrange(factor[0], factor[1]) / 10.0
 
-    if ds != 'DraftKings':
-        player = Player.objects.filter(data_source='DraftKings', uid=ii['id']).first()
-        sign = 1 if player and player.proj_delta > 0 else -1
     return delta * sign
 
 
@@ -42,7 +34,7 @@ def get_players(data_source):
 
         players = requests.get(url).json()
 
-        fields = ['point_spread', 'team_points', 'opponent', 'money_line','proj_points',
+        fields = ['point_spread', 'team_points', 'opponent', 'money_line',
                   'actual_position', 'salary', 'team']
 
         print (data_source, len(players))
@@ -86,5 +78,5 @@ def get_players(data_source):
 
 
 if __name__ == "__main__":
-    for ds in ['DraftKings', 'FanDuel']:
+    for ds in ['DraftKings', 'FanDuel', 'Yahoo']:
         get_players(ds)
