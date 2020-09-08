@@ -1,7 +1,8 @@
 import operator as op
 from ortools.linear_solver import pywraplp
+
 from .models import *
-import pdb
+
 
 class Roster:
 
@@ -58,11 +59,13 @@ POSITION_LIMITS = [
 ROSTER_SIZE = {
     'FanDuel': 9,
     'DraftKings': 9,
+    'Yahoo': 9,
 }
 
 TEAM_LIMIT = {
     'FanDuel': 2,
-    'DraftKings': 2
+    'DraftKings': 2,
+    'Yahoo': 3
 }
 
 def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, _team_stack):

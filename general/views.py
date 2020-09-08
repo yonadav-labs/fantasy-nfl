@@ -85,7 +85,7 @@ def build_lineup(request):
     request.session['ds'] = ds
     key = '{}_lineup_{}'.format(ds, idx)
     num_lineups = request.session.get(ds+'_num_lineups', 1)
-    lineup = request.session.get(key, [{ 'pos':ii, 'player': '' } for ii in CSV_FIELDS[ds]])
+    lineup = request.session.get(key, [{ 'pos':ii, 'player': '' } for ii in CSV_FIELDS])
 
     if idx > num_lineups:           # add lineup
         num_lineups = idx
@@ -93,10 +93,9 @@ def build_lineup(request):
         request.session[key] = lineup
 
     msg = ''
-
     if pid == "123456789":          # remove all lineups
         request.session[ds+'_num_lineups'] = 1
-        lineup = [{ 'pos':ii, 'player': '' } for ii in CSV_FIELDS[ds]]
+        lineup = [{ 'pos':ii, 'player': '' } for ii in CSV_FIELDS]
         request.session['{}_lineup_{}'.format(ds, 1)] = lineup
 
         for ii in range(2, num_lineups+1):
@@ -120,7 +119,7 @@ def build_lineup(request):
                                _team_stack, _exposure, cus_proj, True)
         if lineups:
             roster = lineups[0].get_players()
-            lineup = [{ 'pos':ii, 'player': str(roster[idx].id) } for idx, ii in enumerate(CSV_FIELDS[ds])]
+            lineup = [{ 'pos':ii, 'player': str(roster[idx].id) } for idx, ii in enumerate(CSV_FIELDS)]
             request.session[key] = lineup
         else:
             msg = 'Sorry, something is wrong.'
@@ -256,7 +255,7 @@ def gen_lineups(request):
     players_ = sorted(players_, key=lambda k: k['lineups'], reverse=True)
 
     ds = request.POST.get('ds')
-    header = CSV_FIELDS[ds] + ['Spent', 'Projected']
+    header = CSV_FIELDS + ['Spent', 'Projected']
     
     rows = [[[str(jj) for jj in ii.get_players()]+[int(ii.spent()), '{:.2f}'.format(ii.projected())], ii.drop]
             for ii in lineups]
@@ -306,7 +305,7 @@ def _get_export_cell(player, ds):
 def export_lineups(request):
     lineups, _ = _get_lineups(request)
     ds = request.POST.get('ds')
-    csv_fields = CSV_FIELDS[ds]
+    csv_fields = CSV_FIELDS
     path = "/tmp/.fantasy_nfl_{}.csv".format(ds.lower())
 
     with open(path, 'w') as f:
@@ -331,7 +330,7 @@ def export_manual_lineup(request):
     ds = request.session.get('ds')
     lidx = request.GET.getlist('lidx')
     path = "/tmp/.fantasy_nfl_{}.csv".format(ds.lower())
-    csv_fields = CSV_FIELDS[ds]
+    csv_fields = CSV_FIELDS
 
     with open(path, 'w') as f:
         f.write(','.join(csv_fields)+'\n')
@@ -401,19 +400,18 @@ def get_slates(request):
     return render(request, 'game-slates.html', locals())
 
 
-CSV_FIELDS = {
-    'FanDuel': ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DEF'],
-    'DraftKings': ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DEF'],
-}
+CSV_FIELDS = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DEF']
 
 SALARY_CAP = {
     'FanDuel': 60000,
     'DraftKings': 50000,
+    'Yahoo': 200
 }
 
 TEAM_MEMEBER_LIMIT = {
     'FanDuel': 4,
-    'DraftKings': 5
+    'DraftKings': 5,
+    'Yahoo': 5
 }
 
 
