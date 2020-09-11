@@ -6,8 +6,8 @@ from django.contrib import admin
 from general.models import *
 
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ['first_name', 'last_name', 'uid', 'position', 'actual_position', 'team', 'opponent', 'salary', 'play_today', 
-                    'proj_points', 'proj_delta', 'data_source', 'updated_at', 'created_at', 'avatar']
+    list_display = ['first_name', 'last_name', 'uid', 'position', 'team', 'opponent', 'salary', 'play_today', 
+                    'proj_points', 'proj_delta', 'data_source', 'updated_at', 'created_at', 'lock_update']
     search_fields = ['first_name', 'last_name', 'team']
     list_filter = ['team', 'data_source', 'position', 'play_today']
     save_as = True

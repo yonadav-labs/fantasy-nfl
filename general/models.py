@@ -45,7 +45,7 @@ class Player(models.Model):
     team_points = models.FloatField(default=0)
     value = models.FloatField(default=0)
     play_today = models.BooleanField(default=False)
-    lock_update = models.BooleanField(default=False)
+    lock_update = models.BooleanField(default=False)  # for a week (one slate)
 
     rid = models.CharField(max_length=100, null=True, blank=True)
     data_source = models.CharField(max_length=30, choices=DATA_SOURCE, default='FanDuel')
