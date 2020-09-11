@@ -115,8 +115,7 @@ def build_lineup(request):
         _team_stack = {ii: { 'min': 0, 'max': TEAM_MEMEBER_LIMIT[ds] } for ii in teams if ii}
         _exposure = [{ 'min': 0, 'max': 1, 'id': ii.id } for ii in players]
 
-        lineups = calc_lineups(players, num_lineups, locked, ds, 0, SALARY_CAP[ds], 
-                               _team_stack, _exposure, cus_proj, True)
+        lineups = calc_lineups(players, num_lineups, locked, ds, 0, SALARY_CAP[ds], _team_stack, _exposure, cus_proj)
         if lineups:
             roster = lineups[0].get_players()
             lineup = [{ 'pos':ii, 'player': str(roster[idx].id) } for idx, ii in enumerate(CSV_FIELDS)]
@@ -480,7 +479,6 @@ def _get_lineups(request):
         else:
             break
 
-    lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, 
-        _team_stack, _exposure, cus_proj)
+    lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team_stack, _exposure, cus_proj)
 
     return lineups, players
