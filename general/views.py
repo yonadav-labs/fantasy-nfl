@@ -19,6 +19,7 @@ from django.forms.models import model_to_dict
 
 from general.models import *
 from general.lineup import *
+from general.utils import get_delta
 
 from scripts.roto import get_players as roto_get_players
 from scripts.roto_games import get_games as roto_get_games
@@ -392,7 +393,7 @@ def put_projection(request):
 
         failed = ''
         for idx, name in enumerate(names_):
-            d = { 'proj_points': projection_[idx], 'lock_update': True }
+            d = { 'proj_points': float(projection_[idx])+get_delta(ds), 'lock_update': True }
             first_name, last_name = parse_name(name)
             flag = Player.objects.filter(first_name__iexact=first_name, 
                                          last_name__iexact=last_name, 

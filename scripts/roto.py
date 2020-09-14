@@ -1,4 +1,3 @@
-import random
 import datetime
 import requests
 
@@ -13,14 +12,7 @@ django.setup()
 from general.models import *
 from general import html2text
 from scripts.get_slate import get_slate
-
-
-def get_delta(ii, ds):
-    factor = (-10, 10)
-    sign = 1 if random.randrange(0, 2) else -1
-    delta = random.randrange(factor[0], factor[1]) / 10.0
-
-    return delta * sign
+from general.utils import get_delta
 
 
 def get_players(data_source):
@@ -57,7 +49,7 @@ def get_players(data_source):
                     defaults['first_name'] = ii['first_name'].replace('.', '')
                     defaults['last_name'] = ii['last_name'].replace('.', '')
 
-                    defaults['proj_delta'] = get_delta(ii, data_source)
+                    defaults['proj_delta'] = get_delta(data_source)
                     defaults['proj_points'] = float(ii['proj_points']) + defaults['proj_delta']
         
                     Player.objects.create(**defaults)
@@ -67,7 +59,7 @@ def get_players(data_source):
                     else:
                         criteria = datetime.datetime.combine(datetime.date.today(), datetime.time(22, 30, 0)) # utc time - 5:30 pm EST
                         if player.updated_at.replace(tzinfo=None) < criteria:
-                            defaults['proj_delta'] = get_delta(ii, data_source)
+                            defaults['proj_delta'] = get_delta(data_source)
                             defaults['proj_points'] = float(ii['proj_points']) + defaults['proj_delta']
 
                         for attr, value in defaults.items():
