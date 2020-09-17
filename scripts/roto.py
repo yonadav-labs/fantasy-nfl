@@ -50,7 +50,8 @@ def get_players(data_source):
                     defaults['last_name'] = ii['last_name'].replace('.', '')
 
                     defaults['proj_delta'] = get_delta(data_source)
-                    defaults['proj_points'] = float(ii['proj_points']) + defaults['proj_delta']
+                    proj_points = float(ii['proj_points']) + defaults['proj_delta']
+                    defaults['proj_points'] = proj_points if proj_points > 0 else 0
         
                     Player.objects.create(**defaults)
                 else:
@@ -60,7 +61,8 @@ def get_players(data_source):
                         criteria = datetime.datetime.combine(datetime.date.today(), datetime.time(22, 30, 0)) # utc time - 5:30 pm EST
                         if player.updated_at.replace(tzinfo=None) < criteria:
                             defaults['proj_delta'] = get_delta(data_source)
-                            defaults['proj_points'] = float(ii['proj_points']) + defaults['proj_delta']
+                            proj_points = float(ii['proj_points']) + defaults['proj_delta']
+                            defaults['proj_points'] = proj_points if proj_points > 0 else 0
 
                         for attr, value in defaults.items():
                             setattr(player, attr, value)

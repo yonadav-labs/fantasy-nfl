@@ -371,6 +371,12 @@ def put_ids(request):
             flag = Player.objects.filter(first_name__iexact=first_name, 
                                          last_name__iexact=last_name, 
                                          data_source=ds).update(**d)
+
+            if not flag:  # check for team (DEF)
+                flag = Player.objects.filter(first_name__iexact=name, 
+                                             last_name='', 
+                                             data_source=ds).update(**d)
+
             if not flag:
                 failed += '{}\n'.format(ids_[idx], name)
         result = '{} / {}'.format(len(failed.split('\n')), len(ids_))
@@ -393,7 +399,11 @@ def put_projection(request):
 
         failed = ''
         for idx, name in enumerate(names_):
-            d = { 'proj_points': float(projection_[idx])+get_delta(ds), 'lock_update': True }
+            proj_points = float(projection_[idx]) + get_delta(ds)
+            d = { 
+                'proj_points': proj_points if proj_points > 0 else 0,
+                'lock_update': True 
+            }
             first_name, last_name = parse_name(name)
             flag = Player.objects.filter(first_name__iexact=first_name, 
                                          last_name__iexact=last_name, 
