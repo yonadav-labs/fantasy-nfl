@@ -53,14 +53,19 @@ def _is_full_lineup(lineup, ds):
     return num_players == ROSTER_SIZE[ds]
 
 
-@csrf_exempt
-def get_team_stack_dlg(request, ds):
-    teams = []
+def get_team_match(ds):
+    team_match = {}
     for ii in Game.objects.filter(data_source=ds, display=True):
-        teams.append(ii.home_team.lower())
-        teams.append(ii.visit_team.lower())
+        team_match[ii.home_team] = {
+            'opponent': ii.visit_team,
+            'type': 1
+        }
+        team_match[ii.visit_team] = {
+            'opponent': ii.home_team,
+            'type': 2
+        }
 
-    return render(request, 'team-stack-dlg.html', locals())
+    return team_match
 
 
 @csrf_exempt
@@ -111,12 +116,9 @@ def build_lineup(request):
         players = Player.objects.filter(id__in=ids)
         num_lineups = 1
         locked = [int(ii['player']) for ii in lineup if ii['player']]
-
-        teams = players.values_list('team', flat=True).distinct()
-        _team_stack = {ii: { 'min': 0, 'max': TEAM_MEMEBER_LIMIT[ds] } for ii in teams if ii}
         _exposure = [{ 'min': 0, 'max': 1, 'id': ii.id } for ii in players]
-
-        lineups = calc_lineups(players, num_lineups, locked, ds, 0, SALARY_CAP[ds], _exposure, cus_proj)
+        team_match = get_team_match(ds)
+        lineups = calc_lineups(players, num_lineups, locked, ds, 0, SALARY_CAP[ds], _exposure, cus_proj, team_match)
         if lineups:
             roster = lineups[0].get_players()
             lineup = [{ 'pos':ii, 'player': str(roster[idx].id) } for idx, ii in enumerate(CSV_FIELDS)]
@@ -500,6 +502,7 @@ def _get_lineups(request):
         else:
             break
 
-    lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _exposure, cus_proj)
+    team_match = get_team_match(ds)
+    lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _exposure, cus_proj, team_match)
 
     return lineups, players

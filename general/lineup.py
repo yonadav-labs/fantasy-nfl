@@ -68,7 +68,7 @@ TEAM_LIMIT = {
     'Yahoo': 3
 }
 
-def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary):
+def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, team_match):
     solver = pywraplp.Solver('nfl-lineup', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
     variables = []
@@ -102,13 +102,15 @@ def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary):
             if player.position in position:
                 position_cap.SetCoefficient(variables[i], 1)
 
-    # no more than n players from one team
-    # teams = _team_stack.keys()
-    # for team in teams:
-    #     team_cap = solver.Constraint(_team_stack[team]['min'], _team_stack[team]['max'])
-    #     for i, player in enumerate(players):
-    #         if team == player.team:
-    #             team_cap.SetCoefficient(variables[i], 1)
+    # QB paired with 1 WR/TE of same team
+    team_cap = solver.Constraint(0.999999, 1)
+    for ti, team in enumerate(team_match.keys()):
+        for i, player in enumerate(players):
+            if player.team == team:
+                if player.position in ['WR', 'TE']:
+                    team_cap.SetCoefficient(variables[i], 1/(ti+3))
+                elif player.position == 'QB':
+                    team_cap.SetCoefficient(variables[i], (ti+2)/(ti+3))
 
     size_cap = solver.Constraint(ROSTER_SIZE[ds], ROSTER_SIZE[ds])
     for variable in variables:
@@ -138,24 +140,11 @@ def get_exposure(players, lineups):
     return { ii.id: get_num_lineups(ii, lineups) for ii in players }
 
 
-def get_percent_team(lineups, team, team_info):
-    num = 0
-    for lineup in lineups:
-        num_players = 0
-        for ii in lineup.players:
-            if ii.team == team:
-                num_players += 1
-        if num_players >= team_info['min']:
-            num += 1
-    return num
-
-
-def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, exposure, cus_proj):
+def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, exposure, cus_proj, team_match):
     result = []
     max_point = 10000
     exposure_d = { ii['id']: ii for ii in exposure }
     ban = []
-
     # use custom projection
     for player in players:
         player.proj_points = float(cus_proj.get(str(player.id), player.proj_points))
@@ -167,7 +156,7 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, expos
             if exp >= exposure_d[pid]['max'] and pid not in ban:
                 ban.append(pid)
 
-        roster = get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary)
+        roster = get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, team_match)
 
         if not roster:
             return result

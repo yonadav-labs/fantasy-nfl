@@ -37,5 +37,4 @@ urlpatterns = [
     url(r'^tool-projection$', put_projection, name="put_projection"),
     url(r'^trigger-scraper', trigger_scraper, name="trigger_scraper"),
     url(r'^update-point', update_point, name="update_point"),
-    url(r'^get-team-stack-dlg/(?P<ds>.+)', get_team_stack_dlg, name="get_team_stack_dlg"),
 ]
