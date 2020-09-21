@@ -116,7 +116,7 @@ def build_lineup(request):
         _team_stack = {ii: { 'min': 0, 'max': TEAM_MEMEBER_LIMIT[ds] } for ii in teams if ii}
         _exposure = [{ 'min': 0, 'max': 1, 'id': ii.id } for ii in players]
 
-        lineups = calc_lineups(players, num_lineups, locked, ds, 0, SALARY_CAP[ds], _team_stack, _exposure, cus_proj)
+        lineups = calc_lineups(players, num_lineups, locked, ds, 0, SALARY_CAP[ds], _exposure, cus_proj)
         if lineups:
             roster = lineups[0].get_players()
             lineup = [{ 'pos':ii, 'player': str(roster[idx].id) } for idx, ii in enumerate(CSV_FIELDS)]
@@ -476,29 +476,6 @@ def _get_lineups(request):
     flt = { 'proj_points__gt': 0, 'id__in': ids, 'salary__gt': 0 }
     players = Player.objects.filter(**flt).order_by('-proj_points')
 
-    # generate team stack
-    _team_stack = {}
-    teams = players.values_list('team', flat=True).distinct()
-    for ii in teams:
-        if not ii:
-            continue
-
-        min_team_member_ = int(params.get('team-min-{}'.format(ii.lower()), 0))
-        max_team_member_ = int(params.get('team-max-{}'.format(ii.lower()), TEAM_MEMEBER_LIMIT[ds]))
-        percent_team_member_ = int(params.get('team-percent-{}'.format(ii.lower()), 100))
-
-        if percent_team_member_ == 0:
-            min_team_member_ = 0
-            max_team_member_ = 0
-        else:
-            percent_team_member_ = int(num_lineups * percent_team_member_ / 100.0 + 0.5) or 1
-
-        _team_stack[ii] = { 
-            'min': min_team_member_, 
-            'max': max_team_member_, 
-            'percent': percent_team_member_ 
-        }
-
     # get exposure for each valid player
     _exposure = []
 
@@ -523,6 +500,6 @@ def _get_lineups(request):
         else:
             break
 
-    lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team_stack, _exposure, cus_proj)
+    lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _exposure, cus_proj)
 
     return lineups, players

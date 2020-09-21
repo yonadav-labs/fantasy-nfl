@@ -68,7 +68,7 @@ TEAM_LIMIT = {
     'Yahoo': 3
 }
 
-def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, _team_stack):
+def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary):
     solver = pywraplp.Solver('nfl-lineup', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
     variables = []
@@ -103,12 +103,12 @@ def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, _tea
                 position_cap.SetCoefficient(variables[i], 1)
 
     # no more than n players from one team
-    teams = _team_stack.keys()
-    for team in teams:
-        team_cap = solver.Constraint(_team_stack[team]['min'], _team_stack[team]['max'])
-        for i, player in enumerate(players):
-            if team == player.team:
-                team_cap.SetCoefficient(variables[i], 1)
+    # teams = _team_stack.keys()
+    # for team in teams:
+    #     team_cap = solver.Constraint(_team_stack[team]['min'], _team_stack[team]['max'])
+    #     for i, player in enumerate(players):
+    #         if team == player.team:
+    #             team_cap.SetCoefficient(variables[i], 1)
 
     size_cap = solver.Constraint(ROSTER_SIZE[ds], ROSTER_SIZE[ds])
     for variable in variables:
@@ -150,55 +150,15 @@ def get_percent_team(lineups, team, team_info):
     return num
 
 
-def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team_stack, exposure, cus_proj):
+def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, exposure, cus_proj):
     result = []
     max_point = 10000
     exposure_d = { ii['id']: ii for ii in exposure }
     ban = []
 
-    for team, team_info in _team_stack.items():
-        if team_info['min'] == 0:
-            continue
-
-        while True:
-            percent_team = get_percent_team(result, team, team_info)
-            if percent_team >= team_info['percent']:
-                break
-
-            # create temp team stack
-            __team_stack = {
-                team: team_info
-            }
-
-            for _team, _team_info in _team_stack.items():
-                if _team != team:
-                    __team_stack[_team] = {
-                        'min': 0,
-                        'max': _team_info['min']-1 if _team_info['min'] != 0 else _team_info['max'],
-                        'percent': _team_info['percent']
-                    }
-
-            # check and update all users' status
-            cur_exps = get_exposure(players, result)
-            for pid, exp in cur_exps.items():
-                if exp >= exposure_d[pid]['max'] and pid not in ban:
-                    ban.append(pid)
-
-            roster = get_lineup(ds, players, locked, ban, max_point, min_salary, 
-                                max_salary, __team_stack)
-
-            if not roster:
-                return result
-
-            max_point = float(roster.projected()) - 0.001
-            if roster.get_num_teams() >= TEAM_LIMIT[ds]:
-                result.append(roster)
-                if len(result) == num_lineups:
-                    return result
-
-    # reset team stack - only care max
-    for team, team_info in _team_stack.items():
-        team_info['min'] = 0
+    # use custom projection
+    for player in players:
+        player.proj_points = float(cus_proj.get(str(player.id), player.proj_points))
 
     while True:
         # check and update all users' status
@@ -207,8 +167,7 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team
             if exp >= exposure_d[pid]['max'] and pid not in ban:
                 ban.append(pid)
 
-        roster = get_lineup(ds, players, locked, ban, max_point, min_salary, 
-                            max_salary, _team_stack)
+        roster = get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary)
 
         if not roster:
             return result
