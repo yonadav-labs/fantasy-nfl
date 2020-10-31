@@ -40,7 +40,7 @@ def get_players(data_source):
                 defaults['position'] = ii['position'] if ii['position'] != 'D' else 'DEF'
                 # defaults['available'] = ii['team'] in teams
                 defaults['injury'] = html2text.html2text(ii['injury']).strip().upper()
-                defaults['value'] = ii['salary'] / 250.0 + 10
+                # defaults['value'] = ii['salary'] / 250.0 + 10
 
                 player = Player.objects.filter(uid=ii['id'], data_source=data_source).first()
                 if not player:
@@ -55,17 +55,16 @@ def get_players(data_source):
         
                     Player.objects.create(**defaults)
                 else:
-                    if player.lock_update:
-                        player.play_today = True
-                    else:
+                    if not player.lock_update:
                         criteria = datetime.datetime.combine(datetime.date.today(), datetime.time(22, 30, 0)) # utc time - 5:30 pm EST
                         if player.updated_at.replace(tzinfo=None) < criteria:
                             defaults['proj_delta'] = get_delta(data_source)
                             proj_points = float(ii['proj_points']) + defaults['proj_delta']
                             defaults['proj_points'] = proj_points if proj_points > 0 else 0
 
-                        for attr, value in defaults.items():
-                            setattr(player, attr, value)
+                    for attr, value in defaults.items():
+                        setattr(player, attr, value)
+
                     player.save()
     except:
         print("*** some thing is wrong ***")
