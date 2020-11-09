@@ -103,14 +103,14 @@ def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, team
                 position_cap.SetCoefficient(variables[i], 1)
 
     # QB paired with 1 WR/TE of same team
-    team_cap = solver.Constraint(0.999999, 1)
-    for ti, team in enumerate(team_match.keys()):
-        for i, player in enumerate(players):
-            if player.team == team:
-                if player.position in ['WR', 'TE']:
-                    team_cap.SetCoefficient(variables[i], 1/(ti+3))
-                elif player.position == 'QB':
-                    team_cap.SetCoefficient(variables[i], (ti+2)/(ti+3))
+    # team_cap = solver.Constraint(0.999999, 1)
+    # for ti, team in enumerate(team_match.keys()):
+    #     for i, player in enumerate(players):
+    #         if player.team == team:
+    #             if player.position in ['WR', 'TE']:
+    #                 team_cap.SetCoefficient(variables[i], 1/(ti+3))
+    #             elif player.position == 'QB':
+    #                 team_cap.SetCoefficient(variables[i], (ti+2)/(ti+3))
 
     size_cap = solver.Constraint(ROSTER_SIZE[ds], ROSTER_SIZE[ds])
     for variable in variables:
