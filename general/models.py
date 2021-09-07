@@ -23,8 +23,6 @@ class Game(models.Model):
     home_score = models.CharField(max_length=50, null=True, blank=True)
     visit_score = models.CharField(max_length=50, null=True, blank=True)
     ou = models.FloatField(default=0)
-    ml = models.CharField(max_length=20, null=True, blank=True, default="")
-    display = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):

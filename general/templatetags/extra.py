@@ -12,17 +12,6 @@ def percent(val):
 
 
 @register.filter
-def ou_ml(game, team):
-    if not game.ml:
-        return ''
-
-    if team in game.ml:
-        return '( {} )'.format(game.ml.split(' ')[-1])
-    else:
-        return '( {} )'.format(int(game.ou))
-
-
-@register.filter
 def cus_proj(player, session):
     cus_proj = session.get('cus_proj', {})
     cus_proj = cus_proj.get(str(player['id']), player['proj_points'])

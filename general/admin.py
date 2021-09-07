@@ -22,6 +22,6 @@ class PlayerAdmin(admin.ModelAdmin):
 
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
-    list_display = ['slate', 'visit_team', 'home_team', 'ou', 'ml', 'time', 'updated_at']
+    list_display = ['slate', 'visit_team', 'home_team', 'ou', 'time', 'updated_at']
     search_fields = ['home_team', 'visit_team']
     list_filter = ['slate__name', 'slate__data_source']
