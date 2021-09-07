@@ -204,22 +204,6 @@ table th {
     padding: .7rem .6rem !important;
 }
 
-.games {
-    max-height: calc(100vh - 370px); 
-    overflow-x: hidden;
-}
-
-.games table td {
-    padding: .4rem 7px !important;
-    font-size: 0.88rem;
-}
-
-.games table th {
-    padding: .7rem 2px !important;
-    font-size: 0.88rem;
-    cursor: pointer;
-}
-
 .player-list {
     max-height: calc(100vh - 285px) !important; 
 }
@@ -530,4 +514,8 @@ input[type="search"]::-webkit-search-cancel-button {
 
 .sort-col {
     cursor: pointer;
+}
+
+.slates {
+    width: 240px;
 }

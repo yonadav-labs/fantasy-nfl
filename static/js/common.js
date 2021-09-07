@@ -5,7 +5,6 @@ function inIframe () {
         return true;
     }
 }
-
 if(inIframe()) {
     $('body').toggleClass('d-none');
 } else {

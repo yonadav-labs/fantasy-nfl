@@ -11,7 +11,6 @@
       <th class="sort-col" data-order="actual_position" data-bidirection="true"><span class="pl-2" title="Position">Pos</span></th>
       <th>
         <span class="pl-0 sort-col" data-order="team" data-bidirection="true" title="Team">Tm</span>
-        <span class="pl-3 sort-col" data-order="start" data-bidirection="true" title="Order">Ord</span>
       </th>
       <th class="text-center px-0 sort-col" data-order="salary">Salary <i class="fas fa-sort-amount-down {% if order != 'salary' %} d-none {% endif %}"></i></th>
       <th class="text-center px-0 sort-col" data-order="proj_points">Proj <i class="fas fa-sort-amount-down {% if order != 'proj_points' %} d-none {% endif %}"></i></th>
@@ -23,7 +22,7 @@
   <tbody>
     {% for ii in players %}
       <tr class="{{ ii|cus_proj_cls:request.session }}">
-        <td><input type="checkbox" name="ids" {% if not ii.injury %} checked="" {% endif %} value="{{ ii.id }}"></td>
+        <td><input type="checkbox" name="ids" {% if not ii.injury and ii.proj_points > 0 %} checked="" {% endif %} value="{{ ii.id }}"></td>
         <td style="cursor: pointer;" class="px-0" onclick="pr_click(this)">
           <img src="{{ ii.avatar }}" height="30" class="mr-0"> {{ ii.actual_position }}
         </td>
@@ -35,7 +34,7 @@
                 <span class="text-danger font-weight-bold ml-3">{{ ii.injury }}</span>
               {% endif %}
             </div>
-            <div class="sub">{{ ii.team }} {{ ii.opponent }} {{ ii.handedness }} {% if ii.start and ii.start != '-' %}{{ ii.start }}{% endif %} {% if ii.start and not ii.start_status %}<i class="fas fa-check text-success"></i>{% endif %}</div>
+            <div class="sub">{{ ii.team }} {{ ii.opponent }} {{ ii.order }} {% if ii.confirmed %}<i class="fas fa-check text-success"></i>{% endif %}</div>
           </a>
         </td>
         <td class="text-right pr-3">{% if ds != 'Yahoo' %}${% endif %}{{ ii.salary|floatformat:0 }}</td>

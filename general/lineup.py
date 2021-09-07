@@ -2,7 +2,7 @@ import operator as op
 from ortools.linear_solver import pywraplp
 
 from .models import *
-
+from .constants import POSITION_LIMITS, ROSTER_SIZE, TEAM_LIMIT
 
 class Roster:
 
@@ -47,26 +47,7 @@ class Roster:
         return s
 
 
-POSITION_LIMITS = [
-    ["QB", 1, 1],
-    ["RB", 2, 3],
-    ["WR", 3, 4],
-    ["TE", 1, 2],
-    ["DEF", 1, 1],
-    ["RB,WR,TE", 7, 7]
-]
 
-ROSTER_SIZE = {
-    'FanDuel': 9,
-    'DraftKings': 9,
-    'Yahoo': 9,
-}
-
-TEAM_LIMIT = {
-    'FanDuel': 2,
-    'DraftKings': 2,
-    'Yahoo': 3
-}
 
 def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, team_match):
     solver = pywraplp.Solver('nfl-lineup', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
