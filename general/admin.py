@@ -15,9 +15,9 @@ class SlateAdmin(admin.ModelAdmin):
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
     list_display = ['first_name', 'last_name', 'rid', 'position', 'actual_position', 'team', 'opponent', 'salary',
-                    'confirmed', 'proj_points', 'proj_delta', 'updated_at']
+                    'proj_points', 'proj_delta', 'updated_at']
     search_fields = ['first_name', 'last_name', 'team']
-    list_filter = ['slate__data_source', 'team', 'position', 'confirmed', 'slate__name']
+    list_filter = ['slate__data_source', 'team', 'position', 'slate__name']
 
 
 @admin.register(Game)

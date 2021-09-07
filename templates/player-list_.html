@@ -34,7 +34,7 @@
                 <span class="text-danger font-weight-bold ml-3">{{ ii.injury }}</span>
               {% endif %}
             </div>
-            <div class="sub">{{ ii.team }} {{ ii.opponent }} {{ ii.order }} {% if ii.confirmed %}<i class="fas fa-check text-success"></i>{% endif %}</div>
+            <div class="sub">{{ ii.team }} {{ ii.opponent }}</div>
           </a>
         </td>
         <td class="text-right pr-3">{% if ds != 'Yahoo' %}${% endif %}{{ ii.salary|floatformat:0 }}</td>

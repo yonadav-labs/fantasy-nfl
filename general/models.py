@@ -43,7 +43,6 @@ class Player(models.Model):
     proj_delta = models.FloatField()
     salary = models.IntegerField()
     team = models.CharField(max_length=50)
-    confirmed = models.BooleanField()
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):

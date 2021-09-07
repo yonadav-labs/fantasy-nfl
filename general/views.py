@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import os
-import json
 import math
-import datetime
 import mimetypes
 from wsgiref.util import FileWrapper
 
@@ -12,16 +10,16 @@ from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.utils.encoding import smart_str
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Avg, Q, Sum
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.contrib.admin.views.decorators import staff_member_required
 from django.forms.models import model_to_dict
+from django.apps import apps
 
 from general.models import *
 from general.lineup import *
 from general.dao import get_slate, load_games, load_players
 from general.utils import parse_players_csv, parse_projection_csv, mean
-from general.constants import CSV_FIELDS, SALARY_CAP, TEAM_MEMEBER_LIMIT
+from general.constants import CSV_FIELDS, SALARY_CAP
 
 
 def players(request):
@@ -408,7 +406,7 @@ def update_field(request):
     model_name = data.get('model')
     id = data.get('id')
     field = data.get('field')
-    val = data.get('val') if field != 'confirmed' else data.get('val') == 'true'
+    val = data.get('val')
 
     model_cls = apps.get_model('general', model_name)
     model = model_cls.objects.get(pk=id)
