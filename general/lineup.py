@@ -47,8 +47,6 @@ class Roster:
         return s
 
 
-
-
 def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, team_match):
     solver = pywraplp.Solver('nfl-lineup', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 

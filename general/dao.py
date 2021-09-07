@@ -28,8 +28,9 @@ def load_players(slate, players_info, projection_info):
             first_name, last_name = parse_name(name)
             game_info = player_info['Game Info']
             team = player_info['TeamAbbrev']
-            actual_position = player_info['Position']
-            position = player_info['Roster Position']
+            actual_position = player_info['Position'].replace('DST', 'D')
+            # position = player_info['Roster Position'].replace('DST', 'DEF')
+            position = player_info['Position'].replace('DST', 'DEF')
             salary = player_info['Salary'] or 0
             injury = ''
         elif slate.data_source == 'FanDuel':
@@ -40,7 +41,8 @@ def load_players(slate, players_info, projection_info):
             game_info = player_info['Game']
             team = player_info['Team']
             actual_position = player_info['Position']
-            position = player_info['Roster Position']
+            # position = player_info['Roster Position']
+            position = player_info['Position'].replace('D', 'DEF')
             salary = player_info['Salary'] or 0
             injury = player_info['Injury Details'] or ''
 
