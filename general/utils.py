@@ -22,10 +22,9 @@ def parse_players_csv(file, data_source):
     decoded_file = file.read().decode('utf-8').splitlines()
     net_data = []
 
+    row_start = 0
     if data_source == 'DraftKings':
         row_start = 7
-    elif data_source == 'FanDuel':
-        row_start = 0
 
     for row in decoded_file[row_start:]:
         net_data.append(row)
@@ -65,6 +64,10 @@ def parse_game_info(data_source, game_info):
             time = parts[2]
         elif data_source == 'FanDuel':
             visit_team, home_team = game_info.split('@')
+        elif data_source == 'Yahoo':
+            parts = game_info.split(' ')
+            visit_team, home_team = parts[0].split('@')
+            time = parts[1]
     except Exception:
         pass
 

@@ -297,10 +297,7 @@ def update_point(request):
 
 
 def _get_export_cell(player, ds):
-    if ds == 'Yahoo':
-        return str(player)
-    else:
-        return player.rid or str(player) + ' - No ID'
+    return player.rid or str(player) + ' - No ID'
 
 
 @xframe_options_exempt
@@ -373,6 +370,7 @@ def upload_data(request):
     if request.method == 'GET':
         fd_slates = Slate.objects.filter(data_source="FanDuel").order_by('date')
         dk_slates = Slate.objects.filter(data_source="DraftKings").order_by('date')
+        yh_slates = Slate.objects.filter(data_source="Yahoo").order_by('date')
 
         return render(request, 'upload-slate.html', locals())
     else:
