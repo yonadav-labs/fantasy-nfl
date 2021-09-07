@@ -52,7 +52,7 @@ def _is_full_lineup(lineup, ds):
 
 def get_team_match(ds):
     team_match = {}
-    for ii in Game.objects.filter(data_source=ds, display=True):
+    for ii in Game.objects.filter(slate__data_source=ds):
         team_match[ii.home_team] = {
             'opponent': ii.visit_team,
             'type': 1
@@ -382,7 +382,7 @@ def upload_data(request):
         try:
             projection_file = request.FILES['projection_file']
             projection_info = parse_projection_csv(projection_file)
-            projection_info = [f"{row['name']} @#@{row['projection'] or 0}" for row in projection_info]
+            projection_info = [f"{row['name']} @#@{row['fpts'] or 0}" for row in projection_info]
         except Exception:
             err_msg = 'Projection file is invalid'
             return render(request, 'upload-slate.html', locals())

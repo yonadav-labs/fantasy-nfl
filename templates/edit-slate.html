@@ -58,12 +58,9 @@
             <th>Team</th>
             <th data-orderable='false'>Opp</th>
             <th data-orderable='false' data-width='80'>Position</th>
-            <th data-orderable='false' data-width='60'>Hand</th>
-            <th data-orderable='false' data-width='80'>Ord</th>
             <th data-orderable='false' data-width='75'>Salary</th>
             <th data-orderable='false' data-width='75'>FPTS</th>
             <th data-orderable='false' data-width='100'>Injury</th>
-            <th data-orderable='false' data-width='40'>Conf</th>
           </tr>
         </thead>
         <tbody data-model="Player">
@@ -75,7 +72,7 @@
             <td class="align-middle">{{player.opponent}}</td>
             <td data-field="actual_position"><input type="text" class="form-control" value="{{player.actual_position}}"></td>
             <td data-field="salary"><input type="number" step="1" class="form-control" value="{{player.salary}}"></td>
-            <td data-field="proj_points"><input type="number" class="form-control" min="0" value="{{player.proj_points}}"></td>
+            <td data-field="proj_points"><input type="number" class="form-control" min="0" step="0.01" value="{{player.proj_points}}"></td>
             <td data-field="injury"><input type="text" class="form-control" value="{{player.injury}}"></td>
           </tr>
           {% endfor %}
