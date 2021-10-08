@@ -128,8 +128,9 @@ def build_lineup(request):
         available = False
         for ii in lineup:
             if ii['player']:
-                player = Player.objects.get(id=ii['player'])
-                sum_salary += player.salary
+                player = Player.objects.filter(id=ii['player']).first()
+                if player:
+                    sum_salary += player.salary
 
         player = Player.objects.get(id=pid)
         if SALARY_CAP[ds] >= sum_salary + player.salary:
