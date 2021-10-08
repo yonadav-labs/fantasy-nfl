@@ -90,6 +90,12 @@ def build_lineup(request):
     num_lineups = request.session.get(ds+'_num_lineups', 1)
     lineup = request.session.get(key, [{ 'pos':ii, 'player': '' } for ii in CSV_FIELDS])
 
+    # validate the lineup
+    for ii in lineup:
+        if ii['player']:
+            if not Player.objects.filter(id=ii['player']).exists():
+                ii['player'] = ''
+
     if idx > num_lineups:           # add lineup
         num_lineups = idx
         request.session[ds+'_num_lineups'] = idx
@@ -128,9 +134,8 @@ def build_lineup(request):
         available = False
         for ii in lineup:
             if ii['player']:
-                player = Player.objects.filter(id=ii['player']).first()
-                if player:
-                    sum_salary += player.salary
+                player = Player.objects.get(id=ii['player'])
+                sum_salary += player.salary
 
         player = Player.objects.get(id=pid)
         if SALARY_CAP[ds] >= sum_salary + player.salary:
