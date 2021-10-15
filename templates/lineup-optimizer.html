@@ -16,10 +16,12 @@
         <a class="float-right mr-2" style="margin-top: -46px;" href="/lineup-builder">lineup builder</a>
         <h6 class="text-success float-left pt-2">- Game Slates: </h6>
         <div class="slates float-left ml-3"></div>
+        <a class="d-inline-block ml-3 mt-2" href="?mode={{other_mode}}">{{other_mode|title}}</a>
         <div class="clearfix"></div>
         <div class="games mb-2 mt-4 pl-2"></div>
       </div>
       <input type="hidden" name="ds" id="ds">
+      <input type="hidden" name="mode" value="{{mode}}">
       <div class="col-md-7 mb-4 pr-md-2">
         <ul class="nav nav-tabs ds">
           {% for ds in data_sources %}  
@@ -146,6 +148,9 @@
 {% endblock %}
 
 {% block script %}
+  <script>
+    var slate_mode = '{{mode}}';
+  </script>
   <script src="/static/js/lineup.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 {% endblock %}

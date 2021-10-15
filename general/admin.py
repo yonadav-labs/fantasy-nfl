@@ -8,8 +8,8 @@ from general.models import Slate, Game, Player
 
 @admin.register(Slate)
 class SlateAdmin(admin.ModelAdmin):
-    list_display = ('name', 'data_source', 'date')
-    list_filter = ('data_source',)
+    list_display = ('name', 'data_source', 'date', 'mode')
+    list_filter = ('data_source', 'mode')
 
 
 @admin.register(Player)

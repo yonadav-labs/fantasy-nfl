@@ -371,7 +371,8 @@ function clear_proj (obj) {
 function getSlates() {
   $.post( "/get-slates", 
     { 
-      ds: ds
+      ds: ds,
+      mode: slate_mode
     }, 
     function( data ) {
       $( "div.slates" ).html( data );

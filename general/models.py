@@ -7,9 +7,14 @@ from general.constants import DATA_SOURCE
 
 
 class Slate(models.Model):
+    SLATE_MODE = (
+        ('main', 'Main'),
+        ('showdown', 'Showdown')
+    )
     data_source = models.CharField(max_length=30, choices=DATA_SOURCE)
     name = models.CharField(max_length=120)
     date = models.DateField()
+    mode = models.CharField(max_length=20, choices=SLATE_MODE, default='main')
 
     def __str__(self):
         return self.name

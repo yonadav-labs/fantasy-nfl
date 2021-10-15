@@ -14,7 +14,7 @@
 <body>
   <div class="container">
     <div class="mt-4">
-      <strong>Slate:</strong> {{slate.name}} ({{slate.date}}) [{{slate.data_source}}]
+      <strong>Slate:</strong> {{slate.name}} ({{slate.date}}) [{{slate.data_source}} - {{slate.mode|title}}]
       <a class="btn btn-link btn-primary btn-sm ml-4" href="/upload-data">Upload a new file</a>
     </div>
 
@@ -72,7 +72,7 @@
             <td class="align-middle">{{player.opponent}}</td>
             <td data-field="actual_position"><input type="text" class="form-control" value="{{player.actual_position}}"></td>
             <td data-field="salary"><input type="number" step="1" class="form-control" value="{{player.salary}}"></td>
-            <td data-field="proj_points"><input type="number" class="form-control" min="0" step="0.01" value="{{player.proj_points}}"></td>
+            <td data-field="proj_points"><input type="number" class="form-control" min="0" step="0.01" value="{{player.proj_points|floatformat:2}}"></td>
             <td data-field="injury"><input type="text" class="form-control" value="{{player.injury}}"></td>
           </tr>
           {% endfor %}

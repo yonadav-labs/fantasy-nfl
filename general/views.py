@@ -17,6 +17,7 @@ from django.apps import apps
 
 from general.models import *
 from general.lineup import *
+from general.lineup_showdown import calc_lineups_showdown
 from general.dao import get_slate, load_games, load_players
 from general.utils import parse_players_csv, parse_projection_csv, mean
 from general.constants import CSV_FIELDS, SALARY_CAP
@@ -37,6 +38,8 @@ def lineup_builder(request):
 @xframe_options_exempt
 def lineup_optimizer(request):
     data_sources = DATA_SOURCE
+    mode = request.GET.get('mode', 'main')
+    other_mode = 'showdown' if mode == 'main' else 'main'
 
     return render(request, 'lineup-optimizer.html', locals())
 
@@ -374,16 +377,18 @@ def load_slate(request, slate_id):
 @staff_member_required
 def upload_data(request):
     if request.method == 'GET':
-        fd_slates = Slate.objects.filter(data_source="FanDuel").order_by('date')
+        fd_slates = Slate.objects.filter(data_source="FanDuel").order_by('date', 'mode')
         dk_slates = Slate.objects.filter(data_source="DraftKings").order_by('date')
         yh_slates = Slate.objects.filter(data_source="Yahoo").order_by('date')
+        mode = 'main'
 
         return render(request, 'upload-slate.html', locals())
     else:
         date = request.POST['date']
         slate_name = request.POST['slate']
         data_source = request.POST['data_source']
-        slate = get_slate(date, slate_name, data_source)
+        mode = request.POST['mode']
+        slate = get_slate(date, slate_name, data_source, mode)
 
         err_msg = ''
         try:
@@ -433,7 +438,9 @@ def get_games(request):
 @csrf_exempt
 def get_slates(request):
     ds = request.POST.get('ds')
-    slates = Slate.objects.filter(data_source=ds)
+    mode = request.POST.get('mode')
+    slates = Slate.objects.filter(data_source=ds, mode=mode)
+
     return render(request, 'slate-list.html', locals())
 
 
@@ -444,6 +451,7 @@ def _get_lineups(request):
     locked = [int(ii) for ii in params.getlist('locked')]
     num_lineups = min(int(params.get('num-lineups', 1)), 150)
     ds = params.get('ds', 'DraftKings')
+    mode = params.get('mode')
     min_salary = int(params.get('min_salary', 0))
     max_salary = int(params.get('max_salary', SALARY_CAP[ds]))
 
@@ -479,7 +487,10 @@ def _get_lineups(request):
         else:
             break
 
-    team_match = get_team_match(ds)
-    lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _exposure, cus_proj, team_match)
+    if mode == 'main':
+        team_match = get_team_match(ds)
+        lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _exposure, cus_proj, team_match)
+    elif mode == 'showdown':
+        lineups = calc_lineups_showdown(players, num_lineups, locked, ds, min_salary, max_salary, _exposure, cus_proj)
 
     return lineups, players

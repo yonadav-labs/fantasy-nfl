@@ -46,7 +46,7 @@ class Roster:
         return s
 
 
-def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, team_match):
+def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary):
     solver = pywraplp.Solver('nfl-lineup', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
     variables = []
@@ -80,16 +80,6 @@ def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, team
             if player.position in position:
                 position_cap.SetCoefficient(variables[i], 1)
 
-    # QB paired with 1 WR/TE of same team
-    # team_cap = solver.Constraint(0.999999, 1)
-    # for ti, team in enumerate(team_match.keys()):
-    #     for i, player in enumerate(players):
-    #         if player.team == team:
-    #             if player.position in ['WR', 'TE']:
-    #                 team_cap.SetCoefficient(variables[i], 1/(ti+3))
-    #             elif player.position == 'QB':
-    #                 team_cap.SetCoefficient(variables[i], (ti+2)/(ti+3))
-
     size_cap = solver.Constraint(ROSTER_SIZE[ds], ROSTER_SIZE[ds])
     for variable in variables:
         size_cap.SetCoefficient(variable, 1)
@@ -114,7 +104,7 @@ def get_exposure(players, lineups):
     return { ii.id: get_num_lineups(ii, lineups) for ii in players }
 
 
-def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, exposure, cus_proj, team_match):
+def calc_lineups_showdown(players, num_lineups, locked, ds, min_salary, max_salary, exposure, cus_proj):
     result = []
     max_point = 10000
     exposure_d = { ii['id']: ii for ii in exposure }
@@ -130,7 +120,7 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, expos
             if exp >= exposure_d[pid]['max'] and pid not in ban:
                 ban.append(pid)
 
-        roster = get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, team_match)
+        roster = get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary)
 
         if not roster:
             return result
