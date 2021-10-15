@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-import os
+import csv
 import math
-import mimetypes
-from wsgiref.util import FileWrapper
 
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
-from django.utils.encoding import smart_str
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.contrib.admin.views.decorators import staff_member_required
@@ -31,7 +28,10 @@ def players(request):
 @xframe_options_exempt
 def lineup_builder(request):
     data_sources = DATA_SOURCE
+    mode = request.GET.get('mode', 'main')
+    other_mode = 'showdown' if mode == 'main' else 'main'
     num_lineups = request.session.get('DraftKings_num_lineups', 1)
+
     return render(request, 'lineup-builder.html', locals())
 
 
@@ -314,21 +314,16 @@ def _get_export_cell(player, ds):
 def export_lineups(request):
     lineups, _ = _get_lineups(request)
     ds = request.POST.get('ds')
-    csv_fields = CSV_FIELDS
-    path = "/tmp/.fantasy_nfl_{}.csv".format(ds.lower())
 
-    with open(path, 'w') as f:
-        f.write(','.join(csv_fields)+'\n')
-        for ii in lineups:
-            f.write(','.join([_get_export_cell(jj, ds) for jj in ii.get_players()])+'\n')
-    
-    wrapper = FileWrapper( open( path, "r" ) )
-    content_type = mimetypes.guess_type( path )[0]
-
-    response = HttpResponse(wrapper, content_type = content_type)
-    response['Content-Length'] = os.path.getsize( path )
-    response['Content-Disposition'] = 'attachment; filename=%s' % smart_str( os.path.basename( path ) )
+    response = HttpResponse(content_type='text/csv')
     response['X-Frame-Options'] = 'GOFORIT'
+    response['Content-Disposition'] = f'attachment; filename="fantasy_nfl_{ds.lower()}.csv"'
+    response['X-Frame-Options'] = 'GOFORIT'
+
+    writer = csv.writer(response)
+    writer.writerow(CSV_FIELDS)
+    for ii in lineups:
+        writer.writerow([_get_export_cell(jj, ds) for jj in ii.get_players()])
 
     return response
 
@@ -338,25 +333,21 @@ def export_lineups(request):
 def export_manual_lineup(request):
     ds = request.session.get('ds')
     lidx = request.GET.getlist('lidx')
-    path = "/tmp/.fantasy_nfl_{}.csv".format(ds.lower())
-    csv_fields = CSV_FIELDS
 
-    with open(path, 'w') as f:
-        f.write(','.join(csv_fields)+'\n')
-        for idx in lidx:
-            key = '{}_lineup_{}'.format(ds, idx)
-            lineup = request.session.get(key)
-            players = [Player.objects.get(id=ii['player']) for ii in lineup]
-            f.write(','.join([_get_export_cell(ii, ds) for ii in players])+'\n')
-        
-    wrapper = FileWrapper( open( path, "r" ) )
-    content_type = mimetypes.guess_type( path )[0]
-
-    response = HttpResponse(wrapper, content_type = content_type)
-    response['Content-Length'] = os.path.getsize( path )
-    response['Content-Disposition'] = 'attachment; filename=%s' % smart_str( os.path.basename( path ) )
+    response = HttpResponse(content_type='text/csv')
+    response['X-Frame-Options'] = 'GOFORIT'
+    response['Content-Disposition'] = f'attachment; filename="fantasy_nfl_{ds.lower()}.csv"'
     response['X-Frame-Options'] = 'GOFORIT'
 
+    writer = csv.writer(response)
+    writer.writerow(CSV_FIELDS)
+
+    for idx in lidx:
+        key = '{}_lineup_{}'.format(ds, idx)
+        lineup = request.session.get(key)
+        players = [Player.objects.get(id=ii['player']) for ii in lineup]
+        writer.writerow([_get_export_cell(ii, ds) for ii in players])
+        
     return response
 
 

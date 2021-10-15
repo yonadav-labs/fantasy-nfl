@@ -11,6 +11,7 @@
         <a class="float-right mr-2" style="margin-top: -44px;" href="/lineup-optimizer">lineup optimizer</a>
         <h6 class="text-success float-left pt-2">- Game Slates: </h6>
         <div class="slates float-left ml-3"></div>
+        <a class="d-inline-block ml-3 mt-2" href="?mode={{other_mode}}">{{other_mode|title}}</a>
         <div class="clearfix"></div>
         <div class="games mb-2 mt-4 pl-2"></div>
       </div>
@@ -85,6 +86,7 @@
 {% block script %}
   <script type="text/javascript">
     var num_lineups = {{ num_lineups }};
+    var slate_mode = '{{mode}}';
   </script>
   <script src="/static/js/lineup.js"></script>
 {% endblock %}
