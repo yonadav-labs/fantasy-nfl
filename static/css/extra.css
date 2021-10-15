@@ -387,14 +387,11 @@ td.break {
 .slate-item {
     float: left;
     margin-right: 18px;
-    margin-bottom: 10px;
     width: 100px;
 }
 
 .ds a {
-    /*font-weight: 700;*/
     font-size: 0.94rem;
-    /*padding: 5px 14px;*/
 }
 
 .slate-pane {
@@ -408,13 +405,13 @@ td.break {
     border-radius: 10px;
     padding: 11px 17px;
     cursor: pointer;
-    width: 115px;
+    width: 111px;
     margin-bottom: 8px;
 }
 
 .game-item .form-check-input {
-    margin-top: 22px;
-    margin-left: -50px;
+    margin-top: 7px;
+    margin-left: -43px;
 }
 
 .game-item.active {
@@ -517,5 +514,25 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 
 .slates {
-    width: 240px;
+    width: 210px;
+}
+
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #ccc; 
+    border-radius: 5px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #aaa; 
 }
