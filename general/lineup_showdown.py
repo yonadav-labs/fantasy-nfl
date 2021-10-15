@@ -1,7 +1,7 @@
 from ortools.linear_solver import pywraplp
 
 from .models import *
-from .constants import POSITION_LIMITS, ROSTER_SIZE, TEAM_LIMIT
+from .constants import POSITION_LIMITS_SHOWDOWN, ROSTER_SIZE_SHOWDOWN, TEAM_LIMIT
 
 class Roster:
 
@@ -27,7 +27,9 @@ class Roster:
         return sum(map(lambda x: getattr(x, 'proj_points'), self.players))
 
     def get_players(self):
-        pos = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'RB,WR,TE', 'DEF']
+        pos = ['MVP', 'FLEX', 'FLEX', 'FLEX', 'FLEX']
+        if self.ds == 'DraftKings':
+            pos += ['FLEX']
         players = list(self.players)
         players_ = []
 
@@ -46,14 +48,14 @@ class Roster:
         return s
 
 
-def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary):
+def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, con_mul):
     solver = pywraplp.Solver('nfl-lineup', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
     variables = []
 
     for i, player in enumerate(players):
         if player.id in locked:
-            variables.append(solver.IntVar(1, 1, str(player)+str(i)))
+            pass
         elif player.id in ban:
             variables.append(solver.IntVar(0, 0, str(player)+str(i)))
         else:
@@ -73,16 +75,25 @@ def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary):
     for i, player in enumerate(players):
         point_cap.SetCoefficient(variables[i], player.proj_points)
 
-    for position, min_limit, max_limit in POSITION_LIMITS:
+    for position, min_limit, max_limit in POSITION_LIMITS_SHOWDOWN[ds]:
         position_cap = solver.Constraint(min_limit, max_limit)
 
         for i, player in enumerate(players):
             if player.position in position:
                 position_cap.SetCoefficient(variables[i], 1)
 
-    size_cap = solver.Constraint(ROSTER_SIZE[ds], ROSTER_SIZE[ds])
+    size_cap = solver.Constraint(ROSTER_SIZE_SHOWDOWN[ds], ROSTER_SIZE_SHOWDOWN[ds])
     for variable in variables:
         size_cap.SetCoefficient(variable, 1)
+
+    for ii in con_mul:
+        if players[ii[0]].id in locked:
+            mul_pos_cap = solver.Constraint(1, 1)
+        else:
+            mul_pos_cap = solver.Constraint(0, 1)
+
+        for jj in ii:
+            mul_pos_cap.SetCoefficient(variables[jj], 1)
 
     solution = solver.Solve()
 
@@ -108,19 +119,41 @@ def calc_lineups_showdown(players, num_lineups, locked, ds, min_salary, max_sala
     result = []
     max_point = 10000
     exposure_d = { ii['id']: ii for ii in exposure }
-    ban = []
-    # use custom projection
+
+    con_mul = []
+    players_ = []
+    idx = 0
+
     for player in players:
-        player.proj_points = float(cus_proj.get(str(player.id), player.proj_points))
+        p = vars(player)
+        p.pop('_state')
+        proj_points = float(cus_proj.get(str(player.id), player.proj_points))
+
+        ci_ = [idx, idx+1]
+        # as a flex
+        p['position'] = 'FLEX'
+        p['proj_points'] = proj_points
+        players_.append(Player(**p))
+
+        # as a mvp
+        p['position'] = 'MVP'
+        p['proj_points'] = proj_points * 1.5
+        if ds == 'DraftKings':
+            p['salary'] = player.salary * 1.5
+        players_.append(Player(**p))
+        idx += 2
+        con_mul.append(ci_)
+    players = players_
+
+    ban = []
 
     while True:
-        # check and update all users' status
         cur_exps = get_exposure(players, result)
         for pid, exp in cur_exps.items():
             if exp >= exposure_d[pid]['max'] and pid not in ban:
                 ban.append(pid)
 
-        roster = get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary)
+        roster = get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, con_mul)
 
         if not roster:
             return result

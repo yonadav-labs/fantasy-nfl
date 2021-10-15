@@ -8,6 +8,12 @@ DATA_SOURCE = (
 CSV_FIELDS = ['QB', 'RB', 'RB', 'WR', 'WR', 'WR', 'TE', 'FLEX', 'DEF']
 
 
+CSV_FIELDS_SHOWDOWN = {
+    'DraftKings': ['MVP', 'FLEX', 'FLEX', 'FLEX', 'FLEX', 'FLEX'],
+    'FanDuel': ['MVP', 'FLEX', 'FLEX', 'FLEX', 'FLEX']
+}
+
+
 SALARY_CAP = {
     'FanDuel': 60000,
     'DraftKings': 50000,
@@ -31,10 +37,28 @@ POSITION_LIMITS = [
 ]
 
 
+POSITION_LIMITS_SHOWDOWN = {
+    'DraftKings': [
+        ['MVP', 1, 1],
+        ['FLEX', 5, 5]
+    ],
+    'FanDuel': [
+        ['MVP', 1, 1],
+        ['FLEX', 4, 4]
+    ]
+}
+
+
 ROSTER_SIZE = {
     'FanDuel': 9,
     'DraftKings': 9,
     'Yahoo': 9,
+}
+
+
+ROSTER_SIZE_SHOWDOWN = {
+    'FanDuel': 5,
+    'DraftKings': 6
 }
 
 

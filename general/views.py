@@ -17,7 +17,7 @@ from general.lineup import *
 from general.lineup_showdown import calc_lineups_showdown
 from general.dao import get_slate, load_games, load_players
 from general.utils import parse_players_csv, parse_projection_csv, mean
-from general.constants import CSV_FIELDS, SALARY_CAP
+from general.constants import CSV_FIELDS, CSV_FIELDS_SHOWDOWN, SALARY_CAP
 
 
 def players(request):
@@ -31,6 +31,8 @@ def lineup_builder(request):
     mode = request.GET.get('mode', 'main')
     other_mode = 'showdown' if mode == 'main' else 'main'
     num_lineups = request.session.get('DraftKings_num_lineups', 1)
+    if mode == 'showdown':
+        data_sources = DATA_SOURCE[:2]
 
     return render(request, 'lineup-builder.html', locals())
 
@@ -40,6 +42,8 @@ def lineup_optimizer(request):
     data_sources = DATA_SOURCE
     mode = request.GET.get('mode', 'main')
     other_mode = 'showdown' if mode == 'main' else 'main'
+    if mode == 'showdown':
+        data_sources = DATA_SOURCE[:2]
 
     return render(request, 'lineup-optimizer.html', locals())
 
@@ -267,8 +271,12 @@ def gen_lineups(request):
     players_ = sorted(players_, key=lambda k: k['lineups'], reverse=True)
 
     ds = request.POST.get('ds')
-    header = CSV_FIELDS + ['Spent', 'Projected']
-    
+    mode = request.POST.get('mode')
+    if mode == 'main':
+        header = CSV_FIELDS + ['Spent', 'Projected']
+    else:
+        header = CSV_FIELDS_SHOWDOWN[ds] + ['Spent', 'Projected']
+
     rows = [[[str(jj) for jj in ii.get_players()]+[int(ii.spent()), '{:.2f}'.format(ii.projected())], ii.drop]
             for ii in lineups]
 
@@ -314,14 +322,16 @@ def _get_export_cell(player, ds):
 def export_lineups(request):
     lineups, _ = _get_lineups(request)
     ds = request.POST.get('ds')
+    mode = request.POST.get('mode')
 
     response = HttpResponse(content_type='text/csv')
     response['X-Frame-Options'] = 'GOFORIT'
     response['Content-Disposition'] = f'attachment; filename="fantasy_nfl_{ds.lower()}.csv"'
     response['X-Frame-Options'] = 'GOFORIT'
 
+    header = CSV_FIELDS_SHOWDOWN[ds] if mode == 'showdown' else CSV_FIELDS
     writer = csv.writer(response)
-    writer.writerow(CSV_FIELDS)
+    writer.writerow(header)
     for ii in lineups:
         writer.writerow([_get_export_cell(jj, ds) for jj in ii.get_players()])
 
