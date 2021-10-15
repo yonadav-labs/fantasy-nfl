@@ -93,16 +93,18 @@ def build_lineup(request):
     mode = request.POST.get('mode')
     pid = request.POST.get('pid')
     idx = int(request.POST.get('idx'))
+    positions = CSV_FIELDS_SHOWDOWN[ds] if mode == 'showdown' else CSV_FIELDS
 
     cus_proj = request.session.get('cus_proj', {})
     request.session['ds'] = ds
     request.session['mode'] = mode
 
     num_lineups_key = f'{mode}-{ds}-num-lineups'
-    num_lineups = request.session.get(num_lineups_key, 1)
-    positions = CSV_FIELDS_SHOWDOWN[ds] if mode == 'showdown' else CSV_FIELDS
     lineup_session_key = f'{mode}-{ds}-lineup-{idx}'
-    lineup = request.session.get(lineup_session_key, [{ 'pos':ii, 'player': '' } for ii in positions])
+    num_lineups = request.session.get(num_lineups_key, 1)
+    lineup_ = [{ 'pos':ii, 'player': '' } for ii in positions]
+    # current roster
+    lineup = request.session.get(lineup_session_key, lineup_)
 
     # validate the lineup
     for ii in lineup:
@@ -113,22 +115,20 @@ def build_lineup(request):
     if idx > num_lineups:           # add lineup
         num_lineups = idx
         request.session[num_lineups_key] = idx
-        request.session[lineup_session_key] = lineup
+        request.session[lineup_session_key] = lineup_
 
     msg = ''
     if pid == "123456789":          # remove all lineups
         request.session[num_lineups_key] = 1
-        lineup = [{ 'pos':ii, 'player': '' } for ii in positions]
-        lineup_session_key_ = f'{mode}-{ds}-lineup-1'
-        request.session[lineup_session_key_] = lineup
+        lineup_session_key = f'{mode}-{ds}-lineup-1'
+        request.session[lineup_session_key] = lineup_
 
         for ii in range(2, num_lineups+1):
-            lineup_session_key_ = f'{mode}-{ds}-lineup-{ii}'
-            request.session.pop(lineup_session_key_)
+            lineup_session_key = f'{mode}-{ds}-lineup-{ii}'
+            request.session.pop(lineup_session_key)
     elif '-' in pid:                # remove a player
-        pid = pid.strip('-')
         for ii in lineup:
-            if ii['player'] == pid:
+            if ii['player'] == pid.strip('-'):
                 ii['player'] = ''
     elif pid == 'optimize':         # manual optimize
         ids = request.POST.get('ids').split('&ids=')[1:]
@@ -136,6 +136,7 @@ def build_lineup(request):
         num_lineups = 1
         locked = [int(ii['player']) for ii in lineup if ii['player']]
         _exposure = [{ 'min': 0, 'max': 1, 'id': ii.id } for ii in players]
+        # TODO: take care of mode
         team_match = get_team_match(ds)
         lineups = calc_lineups(players, num_lineups, locked, ds, 0, SALARY_CAP[ds], _exposure, cus_proj, team_match)
         if lineups:
@@ -178,8 +179,7 @@ def build_lineup(request):
     for ii in lineup:
         player = {}
         if ii['player']:
-            # need to take care of old player info
-            player = Player.objects.filter(id=ii['player']).first() or {}
+            player = Player.objects.get(id=ii['player'])
 
         if player:
             pids.append(ii['player'])
@@ -482,8 +482,8 @@ def _get_lineups(request):
             _exposure.append({ 'min': num_lineups, 'max': num_lineups, 'id': ii.id })
         else:
             _exposure.append({
-                'min': int(math.ceil(float(params.get('min_xp_{}'.format(ii.id), 0)) * num_lineups / 100)),
-                'max': int(math.floor(float(params.get('max_xp_{}'.format(ii.id), 0)) * num_lineups / 100)),
+                'min': int(math.ceil(float(params.get(f'min_xp_{ii.id}', 0)) * num_lineups / 100)),
+                'max': int(math.floor(float(params.get(f'max_xp_{ii.id}', 0)) * num_lineups / 100)),
                 'id': ii.id
             })
 
