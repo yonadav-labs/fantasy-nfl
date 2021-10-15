@@ -286,6 +286,7 @@ function build_lineup(pid) {
   $.post( "/build-lineup", {
     pid: pid,
     ds: ds,
+    mode: slate_mode,
     idx: bid.replace('collapse_', ''),
     ids: $('#div-players input[type="checkbox"]:checked').serialize()
   }, function( data ) {

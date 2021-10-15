@@ -15,7 +15,7 @@ def percent(val):
 def cus_proj(player, session):
     cus_proj = session.get('cus_proj', {})
     cus_proj = cus_proj.get(str(player['id']), player['proj_points'])
-    return '{:.2f}'.format(float(cus_proj))
+    return f'{float(cus_proj):.2f}'
 
 
 @register.filter
@@ -29,7 +29,7 @@ def cus_proj_(player, session):
     if player:
         cus_proj = session.get('cus_proj', {})
         proj = cus_proj.get(str(player.id), player.proj_points)
-        return '{:.2f}'.format(float(proj))
+        return f'{float(proj):.2f}'
     return ''
 
 

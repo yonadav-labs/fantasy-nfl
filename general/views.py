@@ -75,11 +75,13 @@ def get_team_match(ds):
 @csrf_exempt
 def check_mlineups(request):
     ds = request.POST.get('ds')
-    num_lineups = request.session.get(ds+'_num_lineups', 1)
+    mode = request.POST.get('mode')
+    num_lineups_key = f'{mode}-{ds}-num-lineups'
+    num_lineups = request.session.get(num_lineups_key, 1)
     res = []
     for ii in range(1, num_lineups+1):
-        key = '{}_lineup_{}'.format(ds, ii)
-        lineup = request.session.get(key)
+        lineup_session_key = f'{mode}-{ds}-lineup-{ii}'
+        lineup = request.session.get(lineup_session_key)
         res.append([ii, 'checked' if _is_full_lineup(lineup, ds) else 'disabled'])
 
     return JsonResponse(res, safe=False)
@@ -88,14 +90,19 @@ def check_mlineups(request):
 @csrf_exempt
 def build_lineup(request):
     ds = request.POST.get('ds')
+    mode = request.POST.get('mode')
     pid = request.POST.get('pid')
     idx = int(request.POST.get('idx'))
 
     cus_proj = request.session.get('cus_proj', {})
     request.session['ds'] = ds
-    key = '{}_lineup_{}'.format(ds, idx)
-    num_lineups = request.session.get(ds+'_num_lineups', 1)
-    lineup = request.session.get(key, [{ 'pos':ii, 'player': '' } for ii in CSV_FIELDS])
+    request.session['mode'] = mode
+
+    num_lineups_key = f'{mode}-{ds}-num-lineups'
+    num_lineups = request.session.get(num_lineups_key, 1)
+    positions = CSV_FIELDS_SHOWDOWN[ds] if mode == 'showdown' else CSV_FIELDS
+    lineup_session_key = f'{mode}-{ds}-lineup-{idx}'
+    lineup = request.session.get(lineup_session_key, [{ 'pos':ii, 'player': '' } for ii in positions])
 
     # validate the lineup
     for ii in lineup:
@@ -105,17 +112,19 @@ def build_lineup(request):
 
     if idx > num_lineups:           # add lineup
         num_lineups = idx
-        request.session[ds+'_num_lineups'] = idx
-        request.session[key] = lineup
+        request.session[num_lineups_key] = idx
+        request.session[lineup_session_key] = lineup
 
     msg = ''
     if pid == "123456789":          # remove all lineups
-        request.session[ds+'_num_lineups'] = 1
-        lineup = [{ 'pos':ii, 'player': '' } for ii in CSV_FIELDS]
-        request.session['{}_lineup_{}'.format(ds, 1)] = lineup
+        request.session[num_lineups_key] = 1
+        lineup = [{ 'pos':ii, 'player': '' } for ii in positions]
+        lineup_session_key_ = f'{mode}-{ds}-lineup-1'
+        request.session[lineup_session_key_] = lineup
 
         for ii in range(2, num_lineups+1):
-            request.session.pop('{}_lineup_{}'.format(ds, ii))
+            lineup_session_key_ = f'{mode}-{ds}-lineup-{ii}'
+            request.session.pop(lineup_session_key_)
     elif '-' in pid:                # remove a player
         pid = pid.strip('-')
         for ii in lineup:
@@ -131,8 +140,8 @@ def build_lineup(request):
         lineups = calc_lineups(players, num_lineups, locked, ds, 0, SALARY_CAP[ds], _exposure, cus_proj, team_match)
         if lineups:
             roster = lineups[0].get_players()
-            lineup = [{ 'pos':ii, 'player': str(roster[idx].id) } for idx, ii in enumerate(CSV_FIELDS)]
-            request.session[key] = lineup
+            lineup = [{ 'pos':ii, 'player': str(roster[idx].id) } for idx, ii in enumerate(positions)]
+            request.session[lineup_session_key] = lineup
         else:
             msg = 'Sorry, something is wrong.'
     elif pid:                       # add a player
@@ -154,7 +163,7 @@ def build_lineup(request):
                         break
             if available:
                 # save lineup
-                request.session[key] = lineup
+                request.session[lineup_session_key] = lineup
             else:
                 msg = 'He is not applicable to any position.'
         else:
@@ -223,9 +232,11 @@ def get_players(request):
         players.append(player)
 
     players = sorted(players, key=lambda k: k[order], reverse=reverse)
+    num_lineups_key = f'{slate.mode}-{ds}-num-lineups'
+
     result = { 
         'html': render_to_string('player-list_.html', locals()),
-        'num_lineups': request.session.get(ds+'_num_lineups', 1),
+        'num_lineups': request.session.get(num_lineups_key, 1),
     }
 
     return JsonResponse(result, safe=False)
@@ -261,7 +272,7 @@ def gen_lineups(request):
     lineups, players = _get_lineups(request)
     avg_points = mean([ii.projected() for ii in lineups])
 
-    players_ = [{ 'name': '{} {}'.format(ii.first_name, ii.last_name), 
+    players_ = [{ 'name': f'{ii.first_name} {ii.last_name}',
                   'team': ii.team, 
                   'position': ii.actual_position,
                   'id': ii.id, 
@@ -272,12 +283,10 @@ def gen_lineups(request):
 
     ds = request.POST.get('ds')
     mode = request.POST.get('mode')
-    if mode == 'main':
-        header = CSV_FIELDS + ['Spent', 'Projected']
-    else:
-        header = CSV_FIELDS_SHOWDOWN[ds] + ['Spent', 'Projected']
+    header = CSV_FIELDS_SHOWDOWN[ds] if mode == 'showdown' else CSV_FIELDS
+    header += ['Spent', 'Projected']
 
-    rows = [[[str(jj) for jj in ii.get_players()]+[int(ii.spent()), '{:.2f}'.format(ii.projected())], ii.drop]
+    rows = [[[str(jj) for jj in ii.get_players()]+[int(ii.spent()), f'{ii.projected():.2f}'], ii.drop]
             for ii in lineups]
 
     result = {
@@ -304,10 +313,11 @@ def update_point(request):
         cus_proj[pid] = points
 
     request.session['cus_proj'] = cus_proj
+    pt_sal = float(points) * factor / player.salary if player.salary else 0
 
     result = {
-        'points': '{:.1f}'.format(float(points)),
-        'pt_sal': '{:.1f}'.format(float(points) * factor / player.salary if player.salary else 0)
+        'points': f'{float(points):.1f}',
+        'pt_sal': f'{pt_sal:.1f}'
     }
 
     return JsonResponse(result, safe=False)
@@ -325,7 +335,6 @@ def export_lineups(request):
     mode = request.POST.get('mode')
 
     response = HttpResponse(content_type='text/csv')
-    response['X-Frame-Options'] = 'GOFORIT'
     response['Content-Disposition'] = f'attachment; filename="fantasy_nfl_{ds.lower()}.csv"'
     response['X-Frame-Options'] = 'GOFORIT'
 
@@ -342,22 +351,23 @@ def export_lineups(request):
 @csrf_exempt
 def export_manual_lineup(request):
     ds = request.session.get('ds')
+    mode = request.session.get('mode')
     lidx = request.GET.getlist('lidx')
 
     response = HttpResponse(content_type='text/csv')
-    response['X-Frame-Options'] = 'GOFORIT'
     response['Content-Disposition'] = f'attachment; filename="fantasy_nfl_{ds.lower()}.csv"'
     response['X-Frame-Options'] = 'GOFORIT'
 
+    header = CSV_FIELDS_SHOWDOWN[ds] if mode == 'showdown' else CSV_FIELDS
     writer = csv.writer(response)
-    writer.writerow(CSV_FIELDS)
+    writer.writerow(header)
 
     for idx in lidx:
-        key = '{}_lineup_{}'.format(ds, idx)
-        lineup = request.session.get(key)
+        lineup_session_key = f'{mode}-{ds}-lineup-{idx}'
+        lineup = request.session.get(lineup_session_key)
         players = [Player.objects.get(id=ii['player']) for ii in lineup]
         writer.writerow([_get_export_cell(ii, ds) for ii in players])
-        
+
     return response
 
 
