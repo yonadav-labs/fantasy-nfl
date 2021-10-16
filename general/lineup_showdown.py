@@ -53,46 +53,53 @@ class Roster:
 def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, con_mul):
     solver = pywraplp.Solver('nfl-lineup', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
-    variables = []
+    variables = {}
 
-    for i, player in enumerate(players):
-        if player.id in locked:
-            pass
-        elif player.id in ban:
-            variables.append(solver.IntVar(0, 0, str(player)+str(i)))
+    for player in players:
+        key = f'{player.id}-{player.position}'
+        if player.id in ban:
+            variables[key] = solver.IntVar(0, 0, key)
         else:
-            variables.append(solver.IntVar(0, 1, str(player)+str(i)))
+            variables[key] = solver.IntVar(0, 1, key)
 
     objective = solver.Objective()
     objective.SetMaximization()
 
-    for i, player in enumerate(players):
-        objective.SetCoefficient(variables[i], player.proj_points)
+    for player in players:
+        key = f'{player.id}-{player.position}'
+        objective.SetCoefficient(variables[key], player.proj_points)
 
     salary_cap = solver.Constraint(min_salary, max_salary)
-    for i, player in enumerate(players):
-        salary_cap.SetCoefficient(variables[i], player.salary)
+    for player in players:
+        key = f'{player.id}-{player.position}'
+        salary_cap.SetCoefficient(variables[key], player.salary)
 
     point_cap = solver.Constraint(0, max_point)
-    for i, player in enumerate(players):
-        point_cap.SetCoefficient(variables[i], player.proj_points)
+    for player in players:
+        key = f'{player.id}-{player.position}'
+        point_cap.SetCoefficient(variables[key], player.proj_points)
 
     for position, min_limit, max_limit in POSITION_LIMITS_SHOWDOWN[ds]:
         position_cap = solver.Constraint(min_limit, max_limit)
 
-        for i, player in enumerate(players):
+        for player in players:
+            key = f'{player.id}-{player.position}'
             if player.position in position:
-                position_cap.SetCoefficient(variables[i], 1)
+                position_cap.SetCoefficient(variables[key], 1)
 
     size_cap = solver.Constraint(ROSTER_SIZE_SHOWDOWN[ds], ROSTER_SIZE_SHOWDOWN[ds])
-    for variable in variables:
-        size_cap.SetCoefficient(variable, 1)
+    for player in players:
+        key = f'{player.id}-{player.position}'
+        size_cap.SetCoefficient(variables[key], 1)
+
+    for ii in locked:
+        lock_cap = solver.Constraint(1, 1)
+
+        for jj in ii:
+            lock_cap.SetCoefficient(variables[jj], 1)
 
     for ii in con_mul:
-        if players[ii[0]].id in locked:
-            mul_pos_cap = solver.Constraint(1, 1)
-        else:
-            mul_pos_cap = solver.Constraint(0, 1)
+        mul_pos_cap = solver.Constraint(0, 1)
 
         for jj in ii:
             mul_pos_cap.SetCoefficient(variables[jj], 1)
@@ -102,8 +109,9 @@ def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, con_
     if solution == solver.OPTIMAL:
         roster = Roster(ds)
 
-        for i, player in enumerate(players):
-            if variables[i].solution_value() == 1:
+        for player in players:
+            key = f'{player.id}-{player.position}'
+            if variables[key].solution_value() == 1:
                 roster.add_player(player)
 
         return roster
@@ -120,14 +128,12 @@ def calc_lineups_showdown(players, num_lineups, locked, ds, min_salary, max_sala
 
     con_mul = []
     players_ = []
-    idx = 0
 
     for player in players:
         p = vars(player)
         p.pop('_state')
         proj_points = float(cus_proj.get(str(player.id), player.proj_points))
 
-        ci_ = [idx, idx+1]
         # as a flex
         p['position'] = 'FLEX'
         p['proj_points'] = proj_points
@@ -139,10 +145,10 @@ def calc_lineups_showdown(players, num_lineups, locked, ds, min_salary, max_sala
         if ds == 'DraftKings':
             p['salary'] = player.salary * 1.5
         players_.append(Player(**p))
-        idx += 2
-        con_mul.append(ci_)
-    players = players_
 
+        con_mul.append([f'{player.id}-MVP', f'{player.id}-FLEX'])
+
+    players = players_
     ban = []
 
     while True:

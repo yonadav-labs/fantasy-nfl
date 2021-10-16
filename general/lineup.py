@@ -63,7 +63,6 @@ def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, team
             variables[key] = solver.IntVar(0, 0, key)
         else:
             variables[key] = solver.IntVar(0, 1, key)
-    # import pdb; pdb.set_trace()
 
     objective = solver.Objective()
     objective.SetMaximization()
@@ -130,7 +129,6 @@ def get_exposure(players, lineups):
 
 
 def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, exposure, cus_proj, team_match):
-    # import pdb; pdb.set_trace()
     result = []
     max_point = 10000
     exposure_d = { ii['id']: ii for ii in exposure }

@@ -143,7 +143,9 @@ def build_lineup(request):
             team_match = get_team_match(ds)
             lineups = calc_lineups(players, num_lineups, locked, ds, 0, SALARY_CAP[ds], _exposure, cus_proj, team_match)
         else:
-            pass
+            locked = [[f"{ii['player']}-{ii['pos']}"] for ii in lineup if ii['player']]
+            lineups = calc_lineups_showdown(players, num_lineups, locked, ds, 0, SALARY_CAP[ds], _exposure, cus_proj)
+
 
         if lineups:
             roster = lineups[0].get_players()
@@ -476,12 +478,13 @@ def _get_lineups(request):
             break
 
     players_ = Player.objects.filter(id__in=locked_ids)
-    locked = [[f'{player.id}-{player.position}'] for player in players_]
 
     if mode == 'main':
         team_match = get_team_match(ds)
+        locked = [[f'{player.id}-{player.position}'] for player in players_]
         lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _exposure, cus_proj, team_match)
     elif mode == 'showdown':
+        locked = [[f'{player.id}-MVP', f'{player.id}-FLEX'] for player in players_]
         lineups = calc_lineups_showdown(players, num_lineups, locked, ds, min_salary, max_salary, _exposure, cus_proj)
 
     return lineups, players
