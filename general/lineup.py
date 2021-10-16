@@ -49,60 +49,76 @@ class Roster:
 
 
 def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, team_match):
+    '''
+    :param: locked: list of list. e.g) [['432-WR', '432-TE'], ['634-TE']]
+    :param: ban: list of ids. e.g) [243, 643]
+    '''
     solver = pywraplp.Solver('nfl-lineup', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
-    variables = []
+    variables = {}
 
-    for i, player in enumerate(players):
-        if player.id in locked:
-            variables.append(solver.IntVar(1, 1, str(player)+str(i)))
-        elif player.id in ban:
-            variables.append(solver.IntVar(0, 0, str(player)+str(i)))
+    for player in players:
+        key = f'{player.id}-{player.position}'
+        if player.id in ban:
+            variables[key] = solver.IntVar(0, 0, key)
         else:
-            variables.append(solver.IntVar(0, 1, str(player)+str(i)))
+            variables[key] = solver.IntVar(0, 1, key)
 
     objective = solver.Objective()
     objective.SetMaximization()
 
-    for i, player in enumerate(players):
-        objective.SetCoefficient(variables[i], player.proj_points)
+    for player in players:
+        key = f'{player.id}-{player.position}'
+        objective.SetCoefficient(variables[key], player.proj_points)
 
     salary_cap = solver.Constraint(min_salary, max_salary)
-    for i, player in enumerate(players):
-        salary_cap.SetCoefficient(variables[i], player.salary)
+    for player in players:
+        key = f'{player.id}-{player.position}'
+        salary_cap.SetCoefficient(variables[key], player.salary)
 
     point_cap = solver.Constraint(0, max_point)
-    for i, player in enumerate(players):
-        point_cap.SetCoefficient(variables[i], player.proj_points)
+    for player in players:
+        key = f'{player.id}-{player.position}'
+        point_cap.SetCoefficient(variables[key], player.proj_points)
 
     for position, min_limit, max_limit in POSITION_LIMITS:
         position_cap = solver.Constraint(min_limit, max_limit)
 
-        for i, player in enumerate(players):
+        for player in players:
+            key = f'{player.id}-{player.position}'
             if player.position in position:
-                position_cap.SetCoefficient(variables[i], 1)
+                position_cap.SetCoefficient(variables[key], 1)
 
     # QB paired with 1 WR/TE of same team
     # team_cap = solver.Constraint(0.999999, 1)
     # for ti, team in enumerate(team_match.keys()):
-    #     for i, player in enumerate(players):
+    #     for player in players:
+    #         key = f'{player.id}-{player.position}'
     #         if player.team == team:
     #             if player.position in ['WR', 'TE']:
-    #                 team_cap.SetCoefficient(variables[i], 1/(ti+3))
+    #                 team_cap.SetCoefficient(variables[key], 1/(ti+3))
     #             elif player.position == 'QB':
-    #                 team_cap.SetCoefficient(variables[i], (ti+2)/(ti+3))
+    #                 team_cap.SetCoefficient(variables[key], (ti+2)/(ti+3))
 
     size_cap = solver.Constraint(ROSTER_SIZE[ds], ROSTER_SIZE[ds])
-    for variable in variables:
-        size_cap.SetCoefficient(variable, 1)
+    for player in players:
+        key = f'{player.id}-{player.position}'
+        size_cap.SetCoefficient(variables[key], 1)
+
+    for ii in locked:
+        lock_cap = solver.Constraint(1, 1)
+
+        for jj in ii:
+            lock_cap.SetCoefficient(variables[jj], 1)
 
     solution = solver.Solve()
 
     if solution == solver.OPTIMAL:
         roster = Roster(ds)
 
-        for i, player in enumerate(players):
-            if variables[i].solution_value() == 1:
+        for player in players:
+            key = f'{player.id}-{player.position}'
+            if variables[key].solution_value() == 1:
                 roster.add_player(player)
 
         return roster
@@ -113,6 +129,7 @@ def get_exposure(players, lineups):
 
 
 def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, exposure, cus_proj, team_match):
+    # import pdb; pdb.set_trace()
     result = []
     max_point = 10000
     exposure_d = { ii['id']: ii for ii in exposure }

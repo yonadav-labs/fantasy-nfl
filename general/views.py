@@ -112,7 +112,7 @@ def build_lineup(request):
         request.session[lineup_session_key] = lineup_
 
     msg = ''
-    if pid == "123456789":          # remove all lineups
+    if pid == "999999999":          # remove all lineups
         request.session[num_lineups_key] = 1
         lineup_session_key = f'{mode}-{ds}-lineup-1'
         request.session[lineup_session_key] = lineup_
@@ -128,7 +128,8 @@ def build_lineup(request):
         ids = request.POST.get('ids').split('&ids=')[1:]
         players = Player.objects.filter(id__in=ids)
         num_lineups = 1
-        locked = [int(ii['player']) for ii in lineup if ii['player']]
+        locked_ids = [ii['player'] for ii in lineup if ii['player']]
+        locked = [f'{player.id}-{player.position}' for player in Player.objects.filter(id__in=locked_ids)]
         _exposure = [{ 'min': 0, 'max': 1, 'id': ii.id } for ii in players]
         # TODO: take care of mode
         team_match = get_team_match(ds)
@@ -423,7 +424,7 @@ def _get_lineups(request):
     params = request.POST
 
     ids = params.getlist('ids')
-    locked = [int(ii) for ii in params.getlist('locked')]
+    locked_ids = [int(ii) for ii in params.getlist('locked')]
     num_lineups = min(int(params.get('num-lineups', 1)), 150)
     ds = params.get('ds', 'DraftKings')
     mode = params.get('mode')
@@ -442,7 +443,7 @@ def _get_lineups(request):
     _exposure = []
 
     for ii in players:
-        if ii.id in locked:
+        if ii.id in locked_ids:
             _exposure.append({ 'min': num_lineups, 'max': num_lineups, 'id': ii.id })
         else:
             _exposure.append({
@@ -461,6 +462,9 @@ def _get_lineups(request):
                 ii['max'] = ii['max'] + 1
         else:
             break
+
+    players_ = Player.objects.filter(id__in=locked_ids)
+    locked = [[f'{player.id}-{player.position}'] for player in players_]
 
     if mode == 'main':
         team_match = get_team_match(ds)

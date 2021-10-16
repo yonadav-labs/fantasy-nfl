@@ -14,9 +14,11 @@
       <th class="text-center px-0 sort-col" data-order="proj_points">Proj <i class="fas fa-sort-amount-down {% if order != 'proj_points' %} d-none {% endif %}"></i></th>
       <th class="text-center px-0 sort-col" data-order="pt_sal">PT/Sal <i class="fas fa-sort-amount-down {% if order != 'pt_sal' %} d-none {% endif %}"></i></th>
       <th class="text-center px-0">Min %</th>
-      <th class="pl-3" colspan="2">Max %</th>
-      <th></th>
-      <th></th>
+      <th class="pl-3">Max %</th>
+      {% if slate.mode == 'showdown' %}
+      <th title="As a Captain">C</th>
+      <th title="As a FLEX">F</th>
+      {% endif %}
     </tr>
   </thead>
   <tbody>

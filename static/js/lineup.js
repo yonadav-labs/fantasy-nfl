@@ -326,7 +326,7 @@ function add_lineup() {
 
 function clear_lineup() {
   $('#accordion').html('');
-  build_lineup(123456789);
+  build_lineup(999999999);
   num_lineups = 0;
   add_lineup();
 }
