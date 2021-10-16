@@ -83,3 +83,11 @@ def get_delta(proj):
     delta = random.randrange(factor[0], factor[1]) / 100.0
 
     return delta * sign
+
+
+def get_num_lineups(player, lineups):
+    return sum([1 for ii in lineups if ii.is_member(player)])
+
+
+def get_cell_to_export(player):
+    return player.rid or str(player) + ' - No ID'

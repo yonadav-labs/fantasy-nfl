@@ -125,7 +125,7 @@ $(function() {
     }
 
     $('#div-result').html('<div class="font-weight-bold text-center" style="margin-top: 64px; min-height: 108px;">Calculating ...</div>');
-    $.post( "/gen-lineups", $('#frm-player').serialize(), function( data ) {
+    $.post( "/generate-lineups", $('#frm-player').serialize(), function( data ) {
       $("#div-result").html(data.player_stat);
       $('#dlg-preview .modal-body').html(data.preview_lineups);
       $('#dlg-preview').modal();
@@ -454,7 +454,7 @@ function toggleLock(obj, pid) {
 
 function export_lineup(e) {
   e.preventDefault();
-  $.post( "/check-mlineups", 
+  $.post( "/check-manual-lineups", 
     { 
       ds: ds,
     }, 

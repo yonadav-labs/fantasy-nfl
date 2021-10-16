@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="container-iframe pt-3 mt-3 mb-3 lineups-container">
-  <form id="frm-player" action="/export_lineups" method="POST">
+  <form id="frm-player" action="/export-lineups" method="POST">
     {% csrf_token %}
     <div class="row">
       <div class="col-md-12">
@@ -65,7 +65,7 @@
   <div class="modal fade" id="dlg-export">
     <div class="modal-dialog">
       <div class="modal-content">
-        <form id="frm-mline" action="/export-mlineup" method="GET">
+        <form id="frm-mline" action="/export-manual-lineup" method="GET">
           {% csrf_token %}
           <div class="modal-header">
             <h4 class="modal-title">Exporting Lineups</h4>

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 import csv
 import math
 
@@ -16,13 +14,8 @@ from general.models import *
 from general.lineup import *
 from general.lineup_showdown import calc_lineups_showdown
 from general.dao import get_slate, load_games, load_players
-from general.utils import parse_players_csv, parse_projection_csv, mean
+from general.utils import parse_players_csv, parse_projection_csv, mean, get_num_lineups, get_cell_to_export
 from general.constants import CSV_FIELDS, CSV_FIELDS_SHOWDOWN, SALARY_CAP
-
-
-def players(request):
-    players = Player.objects.filter(data_source='FanDuel').order_by('first_name')
-    return render(request, 'players.html', locals())
 
 
 @xframe_options_exempt
@@ -73,11 +66,12 @@ def get_team_match(ds):
 
 
 @csrf_exempt
-def check_mlineups(request):
+def check_manual_lineups(request):
     ds = request.POST.get('ds')
     mode = request.POST.get('mode')
     num_lineups_key = f'{mode}-{ds}-num-lineups'
     num_lineups = request.session.get(num_lineups_key, 1)
+
     res = []
     for ii in range(1, num_lineups+1):
         lineup_session_key = f'{mode}-{ds}-lineup-{ii}'
@@ -242,33 +236,8 @@ def get_players(request):
     return JsonResponse(result, safe=False)
 
 
-def get_player(full_name, team):
-    '''
-    FanDuel has top priority
-    '''
-    names = full_name.split(' ')
-    players = Player.objects.filter(first_name=names[0], last_name=names[1], team=team) \
-                            .order_by('data_source')
-    player = players.filter(data_source='FanDuel').first()
-    if not player:
-        player = players.first()
-    return player
-
-
-def mean(numbers):
-    return float(sum(numbers)) / max(len(numbers), 1)
-
-
-def get_num_lineups(player, lineups):
-    num = 0
-    for ii in lineups:
-        if ii.is_member(player):
-            num = num + 1
-    return num
-
-
 @csrf_exempt
-def gen_lineups(request):
+def generate_lineups(request):
     lineups, players = _get_lineups(request)
     avg_points = mean([ii.projected() for ii in lineups])
 
@@ -284,7 +253,7 @@ def gen_lineups(request):
     ds = request.POST.get('ds')
     mode = request.POST.get('mode')
     header = CSV_FIELDS_SHOWDOWN[ds] if mode == 'showdown' else CSV_FIELDS
-    header += ['Spent', 'Projected']
+    header = header.copy() + ['Spent', 'Projected']
 
     rows = [[[str(jj) for jj in ii.get_players()]+[int(ii.spent()), f'{ii.projected():.2f}'], ii.drop]
             for ii in lineups]
@@ -323,10 +292,6 @@ def update_point(request):
     return JsonResponse(result, safe=False)
 
 
-def _get_export_cell(player, ds):
-    return player.rid or str(player) + ' - No ID'
-
-
 @xframe_options_exempt
 @csrf_exempt
 def export_lineups(request):
@@ -335,14 +300,14 @@ def export_lineups(request):
     mode = request.POST.get('mode')
 
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="fantasy_nfl_{ds.lower()}.csv"'
+    response['Content-Disposition'] = f'attachment; filename="fantasy_nfl_{ds.lower()}_{mode}.csv"'
     response['X-Frame-Options'] = 'GOFORIT'
 
     header = CSV_FIELDS_SHOWDOWN[ds] if mode == 'showdown' else CSV_FIELDS
     writer = csv.writer(response)
     writer.writerow(header)
     for ii in lineups:
-        writer.writerow([_get_export_cell(jj, ds) for jj in ii.get_players()])
+        writer.writerow([get_cell_to_export(jj) for jj in ii.get_players()])
 
     return response
 
@@ -355,7 +320,7 @@ def export_manual_lineup(request):
     lidx = request.GET.getlist('lidx')
 
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="fantasy_nfl_{ds.lower()}.csv"'
+    response['Content-Disposition'] = f'attachment; filename="fantasy_nfl_{ds.lower()}_{mode}.csv"'
     response['X-Frame-Options'] = 'GOFORIT'
 
     header = CSV_FIELDS_SHOWDOWN[ds] if mode == 'showdown' else CSV_FIELDS
@@ -366,7 +331,7 @@ def export_manual_lineup(request):
         lineup_session_key = f'{mode}-{ds}-lineup-{idx}'
         lineup = request.session.get(lineup_session_key)
         players = [Player.objects.get(id=ii['player']) for ii in lineup]
-        writer.writerow([_get_export_cell(ii, ds) for ii in players])
+        writer.writerow([get_cell_to_export(ii) for ii in players])
 
     return response
 
@@ -377,10 +342,8 @@ def load_slate(request, slate_id):
     slate = Slate.objects.get(pk=slate_id)
     games = Game.objects.filter(slate=slate)
 
-    if load_empty_proj:
-        players = Player.objects.filter(slate=slate, proj_points=0)
-    else:
-        players = Player.objects.filter(slate=slate, proj_points__gt=0)
+    q = dict(slate=slate, proj_points=0) if load_empty_proj else dict(slate=slate, proj_points__gt=0)
+    players = Player.objects.filter(**q)
 
     return render(request, 'edit-slate.html', locals())
 
@@ -388,10 +351,10 @@ def load_slate(request, slate_id):
 @staff_member_required
 def upload_data(request):
     if request.method == 'GET':
+        mode = 'main'
         fd_slates = Slate.objects.filter(data_source="FanDuel").order_by('date', 'mode')
         dk_slates = Slate.objects.filter(data_source="DraftKings").order_by('date')
         yh_slates = Slate.objects.filter(data_source="Yahoo").order_by('date')
-        mode = 'main'
 
         return render(request, 'upload-slate.html', locals())
     else:
@@ -443,6 +406,7 @@ def update_field(request):
 def get_games(request):
     slate_id = request.POST.get('slate_id')
     games = Game.objects.filter(slate_id=slate_id)
+
     return render(request, 'game-list.html', locals())
 
 

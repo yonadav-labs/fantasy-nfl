@@ -2,6 +2,8 @@ from ortools.linear_solver import pywraplp
 
 from .models import *
 from .constants import POSITION_LIMITS, ROSTER_SIZE, TEAM_LIMIT
+from .utils import get_num_lineups
+
 
 class Roster:
 
@@ -104,10 +106,6 @@ def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, team
                 roster.add_player(player)
 
         return roster
-
-
-def get_num_lineups(player, lineups):
-    return sum([1 for ii in lineups if ii.is_member(player)])
 
 
 def get_exposure(players, lineups):
