@@ -63,6 +63,7 @@ def get_lineup(ds, players, locked, ban, max_point, min_salary, max_salary, team
             variables[key] = solver.IntVar(0, 0, key)
         else:
             variables[key] = solver.IntVar(0, 1, key)
+    # import pdb; pdb.set_trace()
 
     objective = solver.Objective()
     objective.SetMaximization()

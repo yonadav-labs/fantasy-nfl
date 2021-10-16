@@ -282,9 +282,10 @@ $("body").on('hidden.bs.collapse', ".collapse", function() {
   $(this).html("");
 });
 
-function build_lineup(pid) {
+function build_lineup(pid, position) {
   $.post( "/build-lineup", {
     pid: pid,
+    position: position,
     ds: ds,
     mode: slate_mode,
     idx: bid.replace('collapse_', ''),
@@ -428,13 +429,13 @@ function getPlayers (order) {
   );
 }
 
-function toggleLock(obj, pid) {
+function toggleLock(obj, pid, position) {
   if ($('#div-lineup').length > 0) {    // lineup builder
     if ($(obj).hasClass('fa-lock')) {
       pid = -pid;
     }
 
-    build_lineup(pid);
+    build_lineup(pid, position);
   } else {
     if ($('.fa-lock').length == 7 && $(obj).hasClass('fa-lock-open')) {
       alert('You cannot add more locked players.');

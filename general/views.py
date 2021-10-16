@@ -86,6 +86,7 @@ def build_lineup(request):
     ds = request.POST.get('ds')
     mode = request.POST.get('mode')
     pid = request.POST.get('pid')
+    position = request.POST.get('position')
     idx = int(request.POST.get('idx'))
     positions = CSV_FIELDS_SHOWDOWN[ds] if mode == 'showdown' else CSV_FIELDS
 
@@ -125,15 +126,25 @@ def build_lineup(request):
             if ii['player'] == pid.strip('-'):
                 ii['player'] = ''
     elif pid == 'optimize':         # manual optimize
-        ids = request.POST.get('ids').split('&ids=')[1:]
+        ids = request.POST.get('ids').strip('ids=').split('&ids=')
         players = Player.objects.filter(id__in=ids)
         num_lineups = 1
-        locked_ids = [ii['player'] for ii in lineup if ii['player']]
-        locked = [f'{player.id}-{player.position}' for player in Player.objects.filter(id__in=locked_ids)]
         _exposure = [{ 'min': 0, 'max': 1, 'id': ii.id } for ii in players]
-        # TODO: take care of mode
-        team_match = get_team_match(ds)
-        lineups = calc_lineups(players, num_lineups, locked, ds, 0, SALARY_CAP[ds], _exposure, cus_proj, team_match)
+
+        if mode == 'main':
+            locked = []
+            for ii in lineup:
+                if ii['player']:
+                    if ii['pos'] != 'FLEX':
+                        locked.append([f"{ii['player']}-{ii['pos']}"])
+                    else:
+                        player = Player.objects.get(id=ii['player'])
+                        locked.append([f"{player.id}-{player.position}"])
+            team_match = get_team_match(ds)
+            lineups = calc_lineups(players, num_lineups, locked, ds, 0, SALARY_CAP[ds], _exposure, cus_proj, team_match)
+        else:
+            pass
+
         if lineups:
             roster = lineups[0].get_players()
             lineup = [{ 'pos':ii, 'player': str(roster[idx].id) } for idx, ii in enumerate(positions)]
@@ -153,10 +164,11 @@ def build_lineup(request):
         if SALARY_CAP[ds] >= sum_salary + player.salary:
             for ii in lineup:
                 if not ii['player']:
-                    if (player.position in 'RB/WR/TE' and ii['pos'] == 'FLEX') or ii['pos'] in player.position:
+                    if (position in 'RB/WR/TE' and ii['pos'] == 'FLEX') or ii['pos'] in position:
                         available = True
                         ii['player'] = pid
                         break
+            # TODO: check team number constraint
             if available:
                 # save lineup
                 request.session[lineup_session_key] = lineup

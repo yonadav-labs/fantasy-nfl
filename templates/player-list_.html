@@ -51,12 +51,16 @@
         <td class="pl-3">
           <input type="number" min="0" max="100" class="form-control max-exp d-inline text-right pl-0 pr-1 _wu48jf" data-id="{{ ii.id }}" value="100" name="max_xp_{{ ii.id }}">
         </td>
+        {% if slate.mode == 'main' %}
         <td>
-          <i class="fas fa-lock-open fa-md lock unlocked plb-{{ ii.id }}" onclick="toggleLock(this, {{ ii.id }});"></i>
+          <i class="fas fa-lock-open fa-md lock unlocked plb-{{ ii.id }}" onclick="toggleLock(this, {{ ii.id }}, '{{ ii.actual_position }}');"></i>
         </td>
-        {% if slate.mode == 'showdown' %}
+        {% else %}
         <td>
-          <i class="fas fa-lock-open fa-md lock unlocked plb-{{ ii.id }}" onclick="toggleLock(this, {{ ii.id }});"></i>
+          <i class="fas fa-lock-open fa-md lock unlocked plb-mvp-{{ ii.id }}" onclick="toggleLock(this, {{ ii.id }}, 'MVP');"></i>
+        </td>
+        <td>
+          <i class="fas fa-lock-open fa-md lock unlocked plb-{{ ii.id }}" onclick="toggleLock(this, {{ ii.id }}, 'FLEX');"></i>
         </td>
         {% endif %}
       </tr>
