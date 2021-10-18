@@ -26,7 +26,7 @@
             </td>
             <td>{{ ii.player.team }}</td>
             <td class="text-right pr-3">{% if ds != 'Yahoo' and ii.player %}${% endif %}{{ ii.player.salary|floatformat:0 }}</td>
-            <td class="text-center">{{ ii.player|cus_proj_:request.session }}</td>
+            <td class="text-center">{{ ii.player.proj_points|floatformat:2 }}</td>
           </tr>
         {% endfor %}
         <tr class="">

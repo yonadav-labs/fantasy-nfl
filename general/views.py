@@ -202,14 +202,21 @@ def build_lineup(request):
         if player:
             pids.append(ii)
             num_players += 1
+            player.proj_points = float(cus_proj.get(str(player.id), player.proj_points))
+
+            if ii['pos'] == 'MVP':
+                player.proj_points = player.proj_points * 1.5
+                if ds == 'DraftKings':
+                    player.salary = player.salary * 1.5
+
             sum_salary += player.salary
-            sum_proj += float(cus_proj.get(str(player.id), player.proj_points))
+            sum_proj += player.proj_points
 
         pos = 'CAPT' if ds == 'DraftKings' and ii['pos'] == 'MVP' else ii['pos']
         players.append({ 'pos': pos, 'player': player })
 
-    rem = (SALARY_CAP[ds] - sum_salary) / (ROSTER_SIZE[ds] - num_players) if ROSTER_SIZE[ds] != num_players else 0
-    full = num_players == ROSTER_SIZE[ds]
+    roster_size = ROSTER_SIZE[ds] if mode == 'main' else ROSTER_SIZE_SHOWDOWN[ds]
+    rem = (SALARY_CAP[ds] - sum_salary) / (roster_size - num_players) if roster_size != num_players else 0
 
     result = { 
         'html': render_to_string('lineup-body.html', locals()),
