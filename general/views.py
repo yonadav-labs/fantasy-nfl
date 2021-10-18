@@ -16,7 +16,7 @@ from general.lineup import *
 from general.lineup_showdown import calc_lineups_showdown
 from general.dao import get_slate, load_games, load_players
 from general.utils import parse_players_csv, parse_projection_csv, mean, get_num_lineups, get_cell_to_export
-from general.constants import CSV_FIELDS, CSV_FIELDS_SHOWDOWN, SALARY_CAP
+from general.constants import CSV_FIELDS, CSV_FIELDS_SHOWDOWN, ROSTER_SIZE_SHOWDOWN, SALARY_CAP
 
 
 @xframe_options_exempt
@@ -42,13 +42,18 @@ def lineup_optimizer(request):
     return render(request, 'lineup-optimizer.html', locals())
 
 
-def _is_full_lineup(lineup, ds):
+def _is_full_lineup(lineup, ds, mode):
     if not lineup:
         return False
 
     num_players = sum([1 for ii in lineup if ii['player']])
 
-    return num_players == ROSTER_SIZE[ds]
+    if mode == 'main':
+        res = num_players == ROSTER_SIZE[ds]
+    else:
+        res = num_players == ROSTER_SIZE_SHOWDOWN[ds]
+
+    return res
 
 
 def get_team_match(ds):
@@ -77,7 +82,7 @@ def check_manual_lineups(request):
     for ii in range(1, num_lineups+1):
         lineup_session_key = f'{mode}-{ds}-lineup-{ii}'
         lineup = request.session.get(lineup_session_key)
-        res.append([ii, 'checked' if _is_full_lineup(lineup, ds) else 'disabled'])
+        res.append([ii, 'checked' if _is_full_lineup(lineup, ds, mode) else 'disabled'])
 
     return JsonResponse(res, safe=False)
 

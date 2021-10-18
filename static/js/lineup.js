@@ -474,6 +474,7 @@ function export_lineup(e) {
   $.post( "/check-manual-lineups", 
     { 
       ds: ds,
+      mode: slate_mode
     }, 
     function( data ) {
       $('#dlg-export .modal-body').html('');
