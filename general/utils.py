@@ -1,6 +1,8 @@
 import csv
 import random
 
+from .constants import CSV_FIELDS_SHOWDOWN, CSV_FIELDS
+
 
 def mean(numbers):
     return float(sum(numbers)) / max(len(numbers), 1)
@@ -91,3 +93,15 @@ def get_num_lineups(player, lineups):
 
 def get_cell_to_export(player):
     return player.rid or str(player) + ' - No ID'
+
+
+def get_csv_header(mode, ds):
+    if mode == 'main':
+        return CSV_FIELDS
+    elif ds == 'FanDuel':
+        return CSV_FIELDS_SHOWDOWN[ds]
+    else:
+        header = CSV_FIELDS_SHOWDOWN[ds].copy()
+        header[0] = 'CAPT'
+
+        return header

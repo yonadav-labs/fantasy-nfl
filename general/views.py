@@ -15,7 +15,10 @@ from general.models import *
 from general.lineup import *
 from general.lineup_showdown import calc_lineups_showdown
 from general.dao import get_slate, load_games, load_players
-from general.utils import parse_players_csv, parse_projection_csv, mean, get_num_lineups, get_cell_to_export
+from general.utils import (
+    parse_players_csv, parse_projection_csv, mean,
+    get_num_lineups, get_cell_to_export, get_csv_header
+)
 from general.constants import CSV_FIELDS, CSV_FIELDS_SHOWDOWN, ROSTER_SIZE_SHOWDOWN, SALARY_CAP
 
 
@@ -202,7 +205,8 @@ def build_lineup(request):
             sum_salary += player.salary
             sum_proj += float(cus_proj.get(str(player.id), player.proj_points))
 
-        players.append({ 'pos':ii['pos'], 'player': player })
+        pos = 'CAPT' if ds == 'DraftKings' and ii['pos'] == 'MVP' else ii['pos']
+        players.append({ 'pos': pos, 'player': player })
 
     rem = (SALARY_CAP[ds] - sum_salary) / (ROSTER_SIZE[ds] - num_players) if ROSTER_SIZE[ds] != num_players else 0
     full = num_players == ROSTER_SIZE[ds]
@@ -274,7 +278,7 @@ def generate_lineups(request):
 
     ds = request.POST.get('ds')
     mode = request.POST.get('mode')
-    header = CSV_FIELDS_SHOWDOWN[ds] if mode == 'showdown' else CSV_FIELDS
+    header = get_csv_header(mode, ds)
     header = header.copy() + ['Spent', 'Projected']
 
     rows = [[[str(jj) for jj in ii.get_players()]+[int(ii.spent()), f'{ii.projected():.2f}'], ii.drop]
@@ -325,7 +329,7 @@ def export_lineups(request):
     response['Content-Disposition'] = f'attachment; filename="fantasy_nfl_{ds.lower()}_{mode}.csv"'
     response['X-Frame-Options'] = 'GOFORIT'
 
-    header = CSV_FIELDS_SHOWDOWN[ds] if mode == 'showdown' else CSV_FIELDS
+    header = get_csv_header(mode, ds)
     writer = csv.writer(response)
     writer.writerow(header)
     for ii in lineups:
@@ -346,7 +350,7 @@ def export_manual_lineup(request):
     response['Content-Disposition'] = f'attachment; filename="fantasy_nfl_{ds.lower()}_{mode}.csv"'
     response['X-Frame-Options'] = 'GOFORIT'
 
-    header = CSV_FIELDS_SHOWDOWN[ds] if mode == 'showdown' else CSV_FIELDS
+    header = get_csv_header(mode, ds)
     writer = csv.writer(response)
     writer.writerow(header)
 
