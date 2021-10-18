@@ -288,6 +288,7 @@ function build_lineup(pid, position) {
     position: position,
     ds: ds,
     mode: slate_mode,
+    slate_id: slate_id,
     idx: bid.replace('collapse_', ''),
     ids: $('#div-players input[type="checkbox"]:checked').serialize()
   }, function( data ) {
@@ -474,8 +475,9 @@ function export_lineup(e) {
   $.post( "/check-manual-lineups", 
     { 
       ds: ds,
-      mode: slate_mode
-    }, 
+      mode: slate_mode,
+      slate_id: slate_id
+    },
     function( data ) {
       $('#dlg-export .modal-body').html('');
       for (ii in data) {

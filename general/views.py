@@ -75,12 +75,13 @@ def get_team_match(ds):
 def check_manual_lineups(request):
     ds = request.POST.get('ds')
     mode = request.POST.get('mode')
-    num_lineups_key = f'{mode}-{ds}-num-lineups'
+    slate_id = request.POST.get('slate_id')
+    num_lineups_key = f'{mode}-{ds}-{slate_id}-num-lineups'
     num_lineups = request.session.get(num_lineups_key, 1)
 
     res = []
     for ii in range(1, num_lineups+1):
-        lineup_session_key = f'{mode}-{ds}-lineup-{ii}'
+        lineup_session_key = f'{mode}-{ds}-{slate_id}-lineup-{ii}'
         lineup = request.session.get(lineup_session_key)
         res.append([ii, 'checked' if _is_full_lineup(lineup, ds, mode) else 'disabled'])
 
@@ -91,6 +92,7 @@ def check_manual_lineups(request):
 def build_lineup(request):
     ds = request.POST.get('ds')
     mode = request.POST.get('mode')
+    slate_id = request.POST.get('slate_id')
     pid = request.POST.get('pid')
     position = request.POST.get('position')
     idx = int(request.POST.get('idx'))
@@ -99,9 +101,10 @@ def build_lineup(request):
     cus_proj = request.session.get('cus_proj', {})
     request.session['ds'] = ds
     request.session['mode'] = mode
+    request.session['slate_id'] = slate_id
 
-    num_lineups_key = f'{mode}-{ds}-num-lineups'
-    lineup_session_key = f'{mode}-{ds}-lineup-{idx}'
+    num_lineups_key = f'{mode}-{ds}-{slate_id}-num-lineups'
+    lineup_session_key = f'{mode}-{ds}-{slate_id}-lineup-{idx}'
     num_lineups = request.session.get(num_lineups_key, 1)
     lineup_ = [{ 'pos':ii, 'player': '' } for ii in positions]
     # current roster
@@ -121,11 +124,11 @@ def build_lineup(request):
     msg = ''
     if pid == "999999999":          # remove all lineups
         request.session[num_lineups_key] = 1
-        lineup_session_key = f'{mode}-{ds}-lineup-1'
+        lineup_session_key = f'{mode}-{ds}-{slate_id}-lineup-1'
         request.session[lineup_session_key] = lineup_
 
         for ii in range(2, num_lineups+1):
-            lineup_session_key = f'{mode}-{ds}-lineup-{ii}'
+            lineup_session_key = f'{mode}-{ds}-{slate_id}-lineup-{ii}'
             request.session.pop(lineup_session_key)
     elif '-' in pid:                # remove a player
         for ii in lineup:
@@ -245,7 +248,7 @@ def get_players(request):
         players.append(player)
 
     players = sorted(players, key=lambda k: k[order], reverse=reverse)
-    num_lineups_key = f'{slate.mode}-{ds}-num-lineups'
+    num_lineups_key = f'{slate.mode}-{ds}-{slate_id}-num-lineups'
 
     result = { 
         'html': render_to_string('player-list_.html', locals()),
@@ -336,6 +339,7 @@ def export_lineups(request):
 def export_manual_lineup(request):
     ds = request.session.get('ds')
     mode = request.session.get('mode')
+    slate_id = request.session.get('slate_id')
     lidx = request.GET.getlist('lidx')
 
     response = HttpResponse(content_type='text/csv')
@@ -347,7 +351,7 @@ def export_manual_lineup(request):
     writer.writerow(header)
 
     for idx in lidx:
-        lineup_session_key = f'{mode}-{ds}-lineup-{idx}'
+        lineup_session_key = f'{mode}-{ds}-{slate_id}-lineup-{idx}'
         lineup = request.session.get(lineup_session_key)
         players = [Player.objects.get(id=ii['player']) for ii in lineup]
         writer.writerow([get_cell_to_export(ii) for ii in players])
