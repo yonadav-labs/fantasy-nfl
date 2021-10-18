@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.contrib.admin.views.decorators import staff_member_required
 from django.forms.models import model_to_dict
+from django.db.models import Sum
 from django.apps import apps
 
 from general.models import *
@@ -155,12 +156,9 @@ def build_lineup(request):
             msg = 'Sorry, something is wrong.'
     elif pid:                       # add a player
         # check whether he is available
-        sum_salary = 0
+        sum_salary = Player.objects.filter(id__in=[ii['player'] for ii in lineup if ii['player']]) \
+                                   .aggregate(Sum('salary'))['salary__sum'] or 0
         available = False
-        for ii in lineup:
-            if ii['player']:
-                player = Player.objects.get(id=ii['player'])
-                sum_salary += player.salary
 
         player = Player.objects.get(id=pid)
         if SALARY_CAP[ds] >= sum_salary + player.salary:
@@ -191,7 +189,7 @@ def build_lineup(request):
             player = Player.objects.get(id=ii['player'])
 
         if player:
-            pids.append(ii['player'])
+            pids.append(ii)
             num_players += 1
             sum_salary += player.salary
             sum_proj += float(cus_proj.get(str(player.id), player.proj_points))
@@ -213,6 +211,7 @@ def build_lineup(request):
 @csrf_exempt
 def get_players(request):
     slate_id = request.POST.get('slate_id')
+    is_optimizer = request.POST.get('is_optimizer') == 'true'
     slate = Slate.objects.get(pk=slate_id)
     ds = slate.data_source
     order = request.POST.get('order', 'proj_points')

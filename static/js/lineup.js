@@ -292,12 +292,18 @@ function build_lineup(pid, position) {
     ids: $('#div-players input[type="checkbox"]:checked').serialize()
   }, function( data ) {
     $("#"+bid).html(data.html);
+    // initialize
     $('.fas.lock').removeClass('fa-lock');
     $('.fas.lock').addClass('fa-lock-open');
 
     for (ii in data.pids) {
-      $(`.plb-${data.pids[ii]}`).toggleClass('fa-lock-open');
-      $(`.plb-${data.pids[ii]}`).toggleClass('fa-lock');
+      if (data.pids[ii].pos == 'MVP') {
+        $(`.plb-mvp-${data.pids[ii].player}`).toggleClass('fa-lock-open');
+        $(`.plb-mvp-${data.pids[ii].player}`).toggleClass('fa-lock');
+      } else {
+        $(`.plb-${data.pids[ii].player}`).toggleClass('fa-lock-open');
+        $(`.plb-${data.pids[ii].player}`).toggleClass('fa-lock');
+      }
     }
 
     if (data.msg) {
@@ -398,6 +404,7 @@ function getGames() {
 }
 
 function getPlayers (order) {
+  var is_optimizer = $('#div-result').length > 0;
   var games = '';
   $('.games').find('input:checked').each(function() {
     games += $(this).val()+';';
@@ -405,15 +412,15 @@ function getPlayers (order) {
 
   $.post( "/get-players", 
     { 
-      slate_id: slate_id,
-      games: games,
-      order: order
+      slate_id,
+      games,
+      order,
+      is_optimizer
     }, 
     function( data ) {
       $( "#div-players" ).html( data.html );
       filterTable();  // reapply position filter
 
-      var is_optimizer = $('#div-result').length > 0;
 
       if (!order) {
         if (is_optimizer) {
@@ -430,14 +437,23 @@ function getPlayers (order) {
 }
 
 function toggleLock(obj, pid, position) {
-  if ($('#div-lineup').length > 0) {    // lineup builder
+  if ($('#div-lineup').length > 0) {  // lineup builder
     if ($(obj).hasClass('fa-lock')) {
       pid = -pid;
+    } else {  // lock a player
+      if (slate_mode == 'showdown') {
+        var opponentClass = position == 'MVP' ? `.plb-${pid}` : `.plb-mvp-${pid}`;
+        if ($(opponentClass).hasClass('fa-lock')) {
+          alert('You cannot lock a player for multiple positions.');
+          return;
+        }
+      }
     }
 
     build_lineup(pid, position);
   } else {
-    if ($('.fa-lock').length == 7 && $(obj).hasClass('fa-lock-open')) {
+    var limit = slate_mode == 'main' ? 7 : 4;
+    if ($('.fa-lock').length == limit && $(obj).hasClass('fa-lock-open')) {
       alert('You cannot add more locked players.');
       return false;
     }
