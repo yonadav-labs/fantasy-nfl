@@ -22,6 +22,9 @@ def get_custom_projection(name, player_names):
 def load_players(slate, players_info, projection_info):
     players = []
     for player_info in players_info:
+        if player_info['Roster Position'] == 'CPT':
+            continue
+
         if slate.data_source == 'DraftKings':
             rid = player_info['ID']
             name = player_info['Name']

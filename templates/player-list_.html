@@ -15,7 +15,7 @@
       <th class="text-center px-0 sort-col" data-order="pt_sal">PT/Sal <i class="fas fa-sort-amount-down {% if order != 'pt_sal' %} d-none {% endif %}"></i></th>
       <th class="text-center px-0">Min %</th>
       <th class="pl-3">Max %</th>
-      {% if slate.mode == 'showdown' and not is_optimizer %}
+      {% if slate.mode == 'showdown' %}
       <th title="As a Captain">C</th>
       <th title="As a FLEX">F</th>
       {% endif %}
@@ -56,11 +56,9 @@
           <i class="fas fa-lock-open fa-md lock unlocked plb-{{ ii.id }}" onclick="toggleLock(this, {{ ii.id }}, '{{ ii.actual_position }}');"></i>
         </td>
         {% else %}
-          {% if not is_optimizer %}
-          <td>
-            <i class="fas fa-lock-open fa-md lock unlocked plb-mvp-{{ ii.id }}" onclick="toggleLock(this, {{ ii.id }}, 'MVP');"></i>
-          </td>
-          {% endif %}
+        <td>
+          <i class="fas fa-lock-open fa-md lock unlocked fa-mvp plb-mvp-{{ ii.id }}" onclick="toggleLock(this, {{ ii.id }}, 'MVP');"></i>
+        </td>
         <td>
           <i class="fas fa-lock-open fa-md lock unlocked plb-{{ ii.id }}" onclick="toggleLock(this, {{ ii.id }}, 'FLEX');"></i>
         </td>

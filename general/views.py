@@ -457,7 +457,8 @@ def _get_lineups(request):
     params = request.POST
 
     ids = params.getlist('ids')
-    locked_ids = [int(ii) for ii in params.getlist('locked')]
+    locked_ids = [int(ii.split('-')[0]) for ii in params.getlist('locked')]
+    locked = [[ii] for ii in params.getlist('locked')]
     num_lineups = min(int(params.get('num-lineups', 1)), 150)
     ds = params.get('ds', 'DraftKings')
     mode = params.get('mode')
@@ -500,10 +501,8 @@ def _get_lineups(request):
 
     if mode == 'main':
         team_match = get_team_match(ds)
-        locked = [[f'{player.id}-{player.position}'] for player in players_]
         lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _exposure, cus_proj, team_match)
     elif mode == 'showdown':
-        locked = [[f'{player.id}-MVP', f'{player.id}-FLEX'] for player in players_]
         lineups = calc_lineups_showdown(players, num_lineups, locked, ds, min_salary, max_salary, _exposure, cus_proj)
 
     return lineups, players

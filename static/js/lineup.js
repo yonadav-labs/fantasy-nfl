@@ -438,34 +438,39 @@ function getPlayers (order) {
 }
 
 function toggleLock(obj, pid, position) {
+  if (slate_mode == 'showdown' && $(obj).hasClass('fa-lock-open')) {  // add
+    var opponentClass = position == 'MVP' ? `.plb-${pid}` : `.plb-mvp-${pid}`;
+    if ($(opponentClass).hasClass('fa-lock')) {
+      alert('You cannot lock a player for multiple positions.');
+      return;
+    }
+  }
+
   if ($('#div-lineup').length > 0) {  // lineup builder
     if ($(obj).hasClass('fa-lock')) {
       pid = -pid;
-    } else {  // lock a player
-      if (slate_mode == 'showdown') {
-        var opponentClass = position == 'MVP' ? `.plb-${pid}` : `.plb-mvp-${pid}`;
-        if ($(opponentClass).hasClass('fa-lock')) {
-          alert('You cannot lock a player for multiple positions.');
-          return;
-        }
-      }
     }
 
     build_lineup(pid, position);
   } else {
     var limit = slate_mode == 'main' ? 7 : 4;
-    if ($('.fa-lock').length == limit && $(obj).hasClass('fa-lock-open')) {
-      alert('You cannot add more locked players.');
-      return false;
+    if ($(obj).hasClass('fa-lock-open')) {  // add
+      if ($('.fa-lock').length == limit) {
+        alert('You cannot add more locked players.');
+        return false;
+      } else if(($('.fa-mvp.fa-lock').length == 1) && $(obj).hasClass('fa-mvp')) {
+        alert('You cannot lock another captain.');
+        return false;
+      }
     }
 
     $(obj).toggleClass('fa-lock-open');
     $(obj).toggleClass('fa-lock');
 
     if ($(obj).hasClass('fa-lock')) {
-      $('#frm-player').append(`<input type="hidden" name="locked" value="${pid}" id="lock${pid}">`);
+      $('#frm-player').append(`<input type="hidden" name="locked" value="${pid}-${position}" id="lock${pid}-${position}">`);
     } else {
-      $(`#lock${pid}`).remove();
+      $(`#lock${pid}-${position}`).remove();
     }
   }
 }
