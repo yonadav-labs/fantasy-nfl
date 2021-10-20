@@ -96,7 +96,7 @@ def get_cell_to_export(player):
 
 
 def get_csv_header(mode, ds):
-    if mode == 'main':
+    if mode == 'classic':
         return CSV_FIELDS
     elif ds == 'FanDuel':
         return CSV_FIELDS_SHOWDOWN[ds]

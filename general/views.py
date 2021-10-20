@@ -25,8 +25,8 @@ from general.constants import CSV_FIELDS, CSV_FIELDS_SHOWDOWN, ROSTER_SIZE_SHOWD
 @xframe_options_exempt
 def lineup_builder(request):
     data_sources = DATA_SOURCE
-    mode = request.GET.get('mode', 'main')
-    other_mode = 'showdown' if mode == 'main' else 'main'
+    mode = request.GET.get('mode', 'classic')
+    other_mode = 'showdown' if mode == 'classic' else 'classic'
     num_lineups = request.session.get('DraftKings_num_lineups', 1)
     if mode == 'showdown':
         data_sources = DATA_SOURCE[:2]
@@ -37,8 +37,8 @@ def lineup_builder(request):
 @xframe_options_exempt
 def lineup_optimizer(request):
     data_sources = DATA_SOURCE
-    mode = request.GET.get('mode', 'main')
-    other_mode = 'showdown' if mode == 'main' else 'main'
+    mode = request.GET.get('mode', 'classic')
+    other_mode = 'showdown' if mode == 'classic' else 'classic'
     if mode == 'showdown':
         data_sources = DATA_SOURCE[:2]
 
@@ -51,7 +51,7 @@ def _is_full_lineup(lineup, ds, mode):
 
     num_players = sum([1 for ii in lineup if ii['player']])
 
-    if mode == 'main':
+    if mode == 'classic':
         res = num_players == ROSTER_SIZE[ds]
     else:
         res = num_players == ROSTER_SIZE_SHOWDOWN[ds]
@@ -143,7 +143,7 @@ def build_lineup(request):
         num_lineups = 1
         _exposure = [{ 'min': 0, 'max': 1, 'id': ii.id } for ii in players]
 
-        if mode == 'main':
+        if mode == 'classic':
             locked = []
             for ii in lineup:
                 if ii['player']:
@@ -215,7 +215,7 @@ def build_lineup(request):
         pos = 'CAPT' if ds == 'DraftKings' and ii['pos'] == 'MVP' else ii['pos']
         players.append({ 'pos': pos, 'player': player })
 
-    roster_size = ROSTER_SIZE[ds] if mode == 'main' else ROSTER_SIZE_SHOWDOWN[ds]
+    roster_size = ROSTER_SIZE[ds] if mode == 'classic' else ROSTER_SIZE_SHOWDOWN[ds]
     rem = (SALARY_CAP[ds] - sum_salary) / (roster_size - num_players) if roster_size != num_players else 0
 
     result = { 
@@ -385,7 +385,7 @@ def load_slate(request, slate_id):
 @staff_member_required
 def upload_data(request):
     if request.method == 'GET':
-        mode = 'main'
+        mode = 'classic'
         fd_slates = Slate.objects.filter(data_source="FanDuel").order_by('date', 'mode')
         dk_slates = Slate.objects.filter(data_source="DraftKings").order_by('date')
         yh_slates = Slate.objects.filter(data_source="Yahoo").order_by('date')
@@ -499,7 +499,7 @@ def _get_lineups(request):
 
     players_ = Player.objects.filter(id__in=locked_ids)
 
-    if mode == 'main':
+    if mode == 'classic':
         team_match = get_team_match(ds)
         lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _exposure, cus_proj, team_match)
     elif mode == 'showdown':

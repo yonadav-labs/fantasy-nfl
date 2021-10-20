@@ -51,7 +51,7 @@
         <td class="pl-3">
           <input type="number" min="0" max="100" class="form-control max-exp d-inline text-right pl-0 pr-1 _wu48jf" data-id="{{ ii.id }}" value="100" name="max_xp_{{ ii.id }}">
         </td>
-        {% if slate.mode == 'main' %}
+        {% if slate.mode == 'classic' %}
         <td>
           <i class="fas fa-lock-open fa-md lock unlocked plb-{{ ii.id }}" onclick="toggleLock(this, {{ ii.id }}, '{{ ii.actual_position }}');"></i>
         </td>

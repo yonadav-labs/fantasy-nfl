@@ -453,7 +453,7 @@ function toggleLock(obj, pid, position) {
 
     build_lineup(pid, position);
   } else {
-    var limit = slate_mode == 'main' ? 7 : 4;
+    var limit = slate_mode == 'classic' ? 7 : 4;
     if ($(obj).hasClass('fa-lock-open')) {  // add
       if ($('.fa-lock').length == limit) {
         alert('You cannot add more locked players.');
