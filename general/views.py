@@ -167,9 +167,16 @@ def build_lineup(request):
             msg = 'Sorry, something is wrong.'
     elif pid:                       # add a player
         # check whether he is available
-        sum_salary = Player.objects.filter(id__in=[ii['player'] for ii in lineup if ii['player']]) \
-                                   .aggregate(Sum('salary'))['salary__sum'] or 0
+        sum_salary = 0
         available = False
+        for ii in lineup:
+            if ii['player']:
+                # need to take care of old player info
+                player = Player.objects.filter(id=ii['player']).first()
+                if player:
+                    sum_salary += player.salary
+                else:
+                    ii['player'] = ''
 
         player = Player.objects.get(id=pid)
         if SALARY_CAP[ds] >= sum_salary + player.salary:
@@ -197,7 +204,8 @@ def build_lineup(request):
     for ii in lineup:
         player = {}
         if ii['player']:
-            player = Player.objects.get(id=ii['player'])
+            # need to take care of old player info
+            player = Player.objects.filter(id=ii['player']).first() or {}
 
         if player:
             pids.append(ii)
